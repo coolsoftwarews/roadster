@@ -7,11 +7,11 @@
   <meta name="description" content="Carve the canyon. Jump the impossible. A 3D Roadster driving game with cold-gas thrusters, airborne rolls and reactive sound.">
   <title>Roadster Run — Canyon Circuit</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=flight-3">
 </head>
 <body>
   <div id="world" aria-label="Three dimensional canyon racing track"></div>
-  <div class="vignette"></div>
+  <div class="vignette"></div><div id="impact-flash" aria-hidden="true"></div><div id="speed-lines" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand"><span class="brand-symbol">R<span>/</span></span><div>ROADSTER<span class="brand-run">RUN</span><small>CANYON CIRCUIT <i></i> 01</small></div></div>
     <div class="top-actions"><button id="sound" class="icon-button" aria-label="Mute sound" title="Sound (M)"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></svg></button><button id="pause" class="icon-button" aria-label="Pause game" title="Pause (Esc)"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button></div>
@@ -21,28 +21,30 @@
       <div class="intro-content">
         <div class="eyebrow"><span></span> ELECTRIC. UNRESTRICTED.</div>
         <h1>THE ROAD IS<br>JUST THE<br><em>BEGINNING.</em></h1>
-        <p>Carve the corners. Fire the thrusters.<br>Make the impossible jump.</p>
+        <p>Carve the corners. Fire the thrusters.<br>Hit the ramps. Stick the landing.</p>
         <button id="start" class="primary-button">LET’S DRIVE <span>↗</span></button>
-        <div class="intro-meta"><span>ONE TRACK</span><b>·</b><span>YOUR PACE</span><b>·</b><span>NO TIME LIMIT</span></div>
+        <p class="landing-rule"><kbd>SPACE</kbd> on descent = safe landing.<br>No landing thrust = explosion.</p><div class="intro-meta"><span>ONE TRACK</span><b>·</b><span>YOUR PACE</span><b>·</b><span>NO TIME LIMIT</span></div>
       </div>
-      <div class="brief-card"><div class="brief-head"><span>THE FLIGHT PLAN</span><b>01 / CANYON RUN</b></div><div class="brief-stats"><div><strong id="track-distance">2.4</strong><small>KILOMETRES</small></div><div><strong id="obstacle-count">18</strong><small>OBSTACLES</small></div><div><strong>+100</strong><small>PER CLEAR</small></div></div><div class="brief-controls"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Drive</span><span><kbd>SPACE</kbd> Thrust & roll</span></div><p>Jump over an obstacle and land to score. Sound on for the full experience.</p></div>
+      <div class="brief-card"><div class="brief-head"><span>THE FLIGHT PLAN</span><b>01 / CANYON RUN</b></div><div class="brief-stats"><div><strong id="track-distance">2.4</strong><small>KILOMETRES</small></div><div><strong id="obstacle-count">18</strong><small>OBSTACLES</small></div><div><strong>+100</strong><small>PER CLEAR</small></div></div><div class="brief-controls"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Drive</span><span><kbd>SPACE</kbd> Launch / land</span></div><p>5 ramps. +150 per safe ramp landing. +100 per obstacle. Press Space to jump; press again on descent to soften your landing. Miss the landing thrust and you explode.</p></div>
     </section>
     <section id="hud" class="hud hidden" aria-label="Game dashboard">
       <div class="run-stats"><div><small>SCORE</small><strong id="score">0000</strong></div><div><small>RUN TIME</small><strong id="timer">00:00.0</strong></div><div class="clears"><small>CLEARED</small><strong><span id="cleared">0</span><span class="muted"> / <span id="total">18</span></span></strong></div></div>
       <div class="course-progress"><div><span>START</span><span id="progress-label">0%</span><span>FINISH</span></div><div class="progress-track"><i id="progress-bar"></i></div></div>
+      <div id="flight-panel" class="flight-panel hidden" role="status" aria-live="polite"><div class="flight-top"><span id="flight-kind">FLIGHT CONTROL</span><span><b id="altitude">0.0</b> M</span></div><strong id="flight-title">CLIMBING</strong><span id="flight-instruction">Wait for descent, then press Space again.</span><div class="flight-meter"><i id="flight-meter-fill"></i></div></div>
       <div id="notice" class="notice" role="status" aria-live="polite"></div>
       <div class="next-obstacle"><span class="small-label">UP AHEAD</span><strong id="next-type">CLEAR ROAD</strong><span id="next-distance"></span></div>
       <div class="telemetry"><div class="speed"><strong id="speed">0</strong><span>KM/H</span></div><div class="grip"><span id="grip-dot"></span><span id="grip-label">AERO GRIP</span></div></div>
-      <div class="thruster"><div class="thruster-title"><span>↑ THRUSTERS</span><strong id="thrust-label">READY</strong></div><div class="charge-track"><i id="charge-bar"></i></div><div class="thrust-hint"><kbd>SPACE</kbd><span>JUMP + BARREL ROLL</span></div></div>
+      <div class="thruster"><div class="thruster-title"><span>↑ THRUSTERS</span><strong id="thrust-label">READY</strong></div><div class="charge-track"><i id="charge-bar"></i></div><div class="thrust-hint"><kbd>SPACE</kbd><span id="thrust-hint">JUMP / LANDING THRUST</span></div></div>
       <div class="keyboard-hint"><span><kbd>W</kbd> GAS</span><span><kbd>S</kbd> BRAKE</span><span><kbd>A</kbd> LEFT <kbd>D</kbd> RIGHT</span><span><kbd>R</kbd> RECOVER</span><span><kbd>ESC</kbd> PAUSE</span></div>
       <canvas id="minimap" width="240" height="200" aria-label="Track map and your position"></canvas>
     </section>
-    <section id="pause-panel" class="overlay center-panel hidden"><div class="dialog"><div class="eyebrow">TAKE A BREATHER</div><h2>YOUR ROAD.<br><em>YOUR PACE.</em></h2><p>The clock is paused. Pick up where you left off.</p><button id="resume" class="primary-button">KEEP DRIVING <span>↗</span></button><button id="restart" class="text-button">Restart the run</button><div class="pause-controls">W / ↑ Accelerate · S / ↓ Brake<br>A / ← Left · D / → Right · Space Thrust<br>R Recover · M Sound · Esc Pause</div></div></section>
+    <section id="pause-panel" class="overlay center-panel hidden"><div class="dialog"><div class="eyebrow">TAKE A BREATHER</div><h2>YOUR ROAD.<br><em>YOUR PACE.</em></h2><p>The clock is paused. Pick up where you left off.</p><button id="resume" class="primary-button">KEEP DRIVING <span>↗</span></button><button id="restart" class="text-button">Restart the run</button><div class="pause-controls">W / ↑ Accelerate · S / ↓ Brake<br>A / ← Left · D / → Right<br>Space: launch, then press again on descent<br>R Recover · M Sound · Esc Pause</div></div></section>
     <section id="finish" class="overlay center-panel hidden"><div class="dialog finish-dialog"><div class="eyebrow">CANYON CIRCUIT COMPLETE</div><h2>THAT WAS<br><em>A FLIGHT.</em></h2><div id="new-best" class="best-badge hidden">NEW PERSONAL BEST</div><div class="results"><div><small>FINAL SCORE</small><strong id="final-score"></strong></div><div><small>FINISH TIME</small><strong id="final-time"></strong></div><div><small>OBSTACLES CLEARED</small><strong id="final-clears"></strong></div><div><small>BEST TIME</small><strong id="best-time"></strong></div></div><p id="finish-copy"></p><button id="again" class="primary-button">ANOTHER RUN <span>↗</span></button></div></section>
+    <section id="crash-panel" class="overlay center-panel hidden"><div class="dialog crash-dialog"><div class="eyebrow">LANDING THRUST MISSED</div><h2>HARD<br><em>LANDING.</em></h2><p>Fire your thrusters <strong>while descending</strong> to slow the fall. Watch for the <strong>THRUST NOW</strong> cue and tap Space again.</p><div class="crash-stats"><span>Your score is kept.</span><span>Return to the last checkpoint.</span></div><button id="retry" class="primary-button">RETRY CHECKPOINT <span>↗</span></button><button id="crash-restart" class="text-button">Restart the run</button><div class="pause-controls"><kbd>R</kbd> Retry · <kbd>SPACE</kbd> Landing thrust</div></div></section>
     <section id="error" class="overlay center-panel hidden"><div class="dialog"><h2>LET’S GET<br>YOU ROLLING.</h2><p id="error-text">Your browser could not start the 3D renderer. Enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary-button">TRY AGAIN <span>↗</span></button></div></section>
   </main>
-  <div id="touch-controls" class="touch-controls hidden"><div class="steer-buttons"><button data-control="left" aria-label="Steer left">←</button><button data-control="right" aria-label="Steer right">→</button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake">BRAKE</button><button data-control="gas" aria-label="Accelerate">GAS</button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust jump">↑<small>THRUST</small></button></div></div>
+  <div id="touch-controls" class="touch-controls hidden"><div class="steer-buttons"><button data-control="left" aria-label="Steer left">←</button><button data-control="right" aria-label="Steer right">→</button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake">BRAKE</button><button data-control="gas" aria-label="Accelerate">GAS</button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing">↑<small>THRUST</small></button></div></div>
   <footer id="intro-footer"><span>BUILT FOR THE ROAD. READY FOR THE AIR.</span><span>A PLAYABLE ROADSTER CONCEPT</span></footer>
-  <script type="module" src="main.js?v=steering-2"></script>
+  <script type="module" src="main.js?v=flight-3"></script>
 </body>
 </html>

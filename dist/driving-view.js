@@ -4,8 +4,8 @@
 // the car sideways and make that motion appear reversed.
 export function chaseCameraPosition(center, forward, lateral, offset, height, speed) {
   const position = center.clone()
-    .addScaledVector(forward, -(10 + speed * .018))
+    .addScaledVector(forward, -(12 + speed * .018))
     .addScaledVector(lateral, offset * .55);
-  position.y = center.y + 7.5 + height * .36;
+  position.y = center.y + 8.5 + height * .65;
   return position;
 }
