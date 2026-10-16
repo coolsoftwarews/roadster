@@ -168,12 +168,12 @@ function animate(now){
   for(const w of wheels)w.rotation.x+=run.speed*dt/.56;
   for(let i=0;i<flames.length;i++){const active=run.jumpTime>=0;flames[i].visible=active||(preview&&i<2);if(flames[i].visible){flames[i].scale.setScalar((active?1:.2)*(1+Math.random()*.2));flames[i].material.opacity=active?.75:.4;}}
   shadow.position.copy(pointOn(visualS,preview?0:run.offset,.09));shadow.rotation.z=-f.yaw;shadow.material.opacity=1-run.height*.085;shadow.scale.setScalar(1+run.height*.03);
-  const forward=new THREE.Vector3(f.t.x,0,f.t.z).normalize();const target=pos.clone().addScaledVector(forward,preview?17:13);target.y=pointOn(visualS+18,run.offset,1.5).y;
-  const back=preview?18:16+run.speed*.035;const desired=pos.clone().addScaledVector(forward,-back).addScaledVector(f.right,preview?11:run.lateralVelocity*.09);desired.y=f.p.y+(preview?12:10)+run.height*.36;
+  const forward=new THREE.Vector3(f.t.x,0,f.t.z).normalize();const target=pos.clone().addScaledVector(forward,preview?17:9);target.y=pointOn(visualS+18,run.offset,1.5).y;
+  const back=preview?18:10+run.speed*.018;const desired=pos.clone().addScaledVector(forward,-back).addScaledVector(f.right,preview?11:run.lateralVelocity*.09);desired.y=f.p.y+(preview?12:7.5)+run.height*.36;
   if(preview)target.addScaledVector(f.right,13);
   if(!cameraInitialized){camera.position.copy(desired);cameraTarget.copy(target);cameraInitialized=true;}else{camera.position.lerp(desired,1-Math.exp(-dt*5));cameraTarget.lerp(target,1-Math.exp(-dt*6));}
   tempLook.copy(cameraTarget);if(shake>0){tempLook.x+=(Math.random()-.5)*shake;tempLook.y+=(Math.random()-.5)*shake;shake=Math.max(0,shake-dt*.8);}camera.lookAt(tempLook);
-  camera.fov=lerp(camera.fov,preview?57:57+run.speed*.085,dt*3);camera.updateProjectionMatrix();sky.position.copy(camera.position);
+  camera.fov=lerp(camera.fov,preview?57:56+run.speed*.045,dt*3);camera.updateProjectionMatrix();sky.position.copy(camera.position);
   sun.position.copy(pos).add(new THREE.Vector3(-110,145,70));sun.target.position.copy(pos);
   for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.mesh.position.addScaledVector(p.v,dt);p.mesh.scale.setScalar(1+(1-p.life)*7);p.mesh.material.opacity=Math.max(0,p.life*.45);if(p.life<=0){scene.remove(p.mesh);p.mesh.material.dispose();particles.splice(i,1);}}
   const corner=clamp(Math.abs(f.curvature)*run.speed*1.1+Math.abs(run.lateralVelocity)*.05,0,1.5);audio.update(run.speed,input.gas,corner,run.jumpTime>=0,playing);
