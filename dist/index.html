@@ -7,7 +7,7 @@
   <meta name="description" content="Four circuits. One Roadster. Jump the impossible. A 3D Roadster driving game with cold-gas thrusters, airborne rolls and reactive sound.">
   <title>Roadster Run — Four Circuits</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=launch-1">
+  <link rel="stylesheet" href="style.css?v=drive-2">
   <script defer src="https://analytics-ops1.coolsoftware.io/script.js" data-website-id="8581cf0e-5736-4eef-ac55-14426630d248"></script>
 </head>
 <body>
@@ -15,7 +15,7 @@
   <div class="vignette"></div><div id="impact-flash" aria-hidden="true"></div><div id="speed-lines" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand"><span class="brand-symbol">R<span>/</span></span><div>ROADSTER<span class="brand-run">RUN</span><small id="brand-track">CANYON CIRCUIT — 01</small></div></div>
-    <div class="top-actions"><button id="radio-toggle" class="radio-toggle" aria-controls="radio-panel" aria-expanded="false" title="Road-trip radio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></svg><span>RADIO</span></button><button id="sound" class="icon-button" aria-label="Mute driving sounds" title="Driving sounds (M)"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></svg></button><button id="pause" class="icon-button" aria-label="Pause game" title="Pause (Esc)"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button></div>
+    <div class="top-actions"><button id="radio-toggle" class="radio-toggle" aria-controls="radio-panel" aria-expanded="false" title="Road-trip radio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></svg><span>RADIO</span></button><button id="sound" class="icon-button" aria-label="Open sound effects" aria-controls="sound-panel" aria-expanded="false" title="Sound effects · M to mute"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></svg></button><button id="pause" class="icon-button" aria-label="Pause game" title="Pause (Esc)"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button></div>
   </header>
   <section id="radio-panel" class="radio-panel hidden" aria-label="Road-trip radio">
     <div class="radio-heading"><div><small>YOUR ROAD-TRIP SOUNDTRACK</small><h2>Roadster Radio</h2></div><button id="radio-close" class="radio-close" aria-label="Close radio">×</button></div>
@@ -27,19 +27,28 @@
     <input id="radio-volume" type="range" min="0" max="100" step="1" value="30" aria-label="Radio volume">
     <div class="radio-footer"><span>Live music by 181.FM</span><a id="radio-provider" href="https://www.181.fm/" target="_blank" rel="noopener noreferrer">Open station ↗</a></div>
   </section>
+  <section id="sound-panel" class="sound-panel hidden" aria-label="Sound effects">
+    <div class="sound-heading"><h2>Sound effects</h2><button id="sound-close" aria-label="Close sound effects">×</button></div>
+    <button id="sound-enabled" class="sound-enabled" aria-pressed="true">SOUND EFFECTS ON</button>
+    <div class="sound-channel"><div><label for="sound-engine">Engine</label><output id="sound-engine-value" for="sound-engine">55%</output></div><input id="sound-engine" data-sound-channel="engine" type="range" min="0" max="100" step="1" value="55" aria-label="Engine volume"></div>
+    <div class="sound-channel"><div><label for="sound-tires">Tires</label><output id="sound-tires-value" for="sound-tires">75%</output></div><input id="sound-tires" data-sound-channel="tires" type="range" min="0" max="100" step="1" value="75" aria-label="Tires volume"></div>
+    <div class="sound-channel"><div><label for="sound-thrust">Thrusters</label><output id="sound-thrust-value" for="sound-thrust">85%</output></div><input id="sound-thrust" data-sound-channel="thrust" type="range" min="0" max="100" step="1" value="85" aria-label="Thrusters volume"></div>
+    <div class="sound-channel"><div><label for="sound-effects">Impacts & alerts</label><output id="sound-effects-value" for="sound-effects">75%</output></div><input id="sound-effects" data-sound-channel="effects" type="range" min="0" max="100" step="1" value="75" aria-label="Impacts & alerts volume"></div>
+    <p class="sound-help">Set any volume to 0 to mute it. Radio volume is separate.</p>
+    <small class="sound-saved">Saved in this browser · <kbd>M</kbd> toggles all effects</small>
+  </section>
   <main>
     <section id="intro" class="overlay intro launch-home">
       <div class="intro-content">
-        <div class="eyebrow"><span></span> ELECTRIC. UNRESTRICTED.</div>
         <h1>THE ROAD IS<br>JUST THE<br><em>BEGINNING.</em></h1>
         <p>Carve the corners. Fire the thrusters.<br>Hit the ramps. Stick the landing.</p>
-        <div class="driver-field"><label for="driver-name">DRIVER NAME OR URL <span id="driver-count">0 / 255</span></label><input id="driver-name" type="text" maxlength="255" placeholder="Your name or website" autocomplete="nickname" autocapitalize="off" spellcheck="false" aria-describedby="driver-save-status"><small id="driver-save-status">Saved in this browser · shown on your results and card</small></div>
+        <div class="driver-field"><label for="driver-name">DRIVER <span id="driver-count">0 / 255</span></label><input id="driver-name" type="text" maxlength="255" placeholder="Your name" autocomplete="nickname" autocapitalize="off" spellcheck="false" aria-describedby="driver-save-status"><small id="driver-save-status">Saved in this browser · shown on your results and card</small></div>
         <fieldset class="difficulty-picker"><legend>DIFFICULTY</legend><div id="difficulty-options" class="difficulty-options" aria-describedby="difficulty-description"></div><p id="difficulty-description"></p></fieldset>
         <button id="start" class="primary-button">LET’S DRIVE <span>↗</span></button>
-        <button id="intro-radio" class="last-result-button">♫ Tune the road-trip radio</button>
+        <div class="intro-audio-links"><button id="intro-radio" class="last-result-button">♫ Road-trip radio</button><button id="intro-sound" class="last-result-button">Sound effects</button></div>
         <a class="follow-x" href="https://x.com/coolsoftware_ws" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-5-7.6L5.2 22H2l7.5-8.7L.8 2h6.5l4.6 7L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"/></svg><span>Follow me on X<small>@coolsoftware_ws</small></span><b aria-hidden="true">↗</b></a>
         <button id="last-result" class="last-result-button hidden">View your last result ↗</button>
-        <p class="landing-rule"><kbd>SPACE</kbd> on descent = safe landing.<br>No landing thrust = explosion.</p><div class="intro-meta"><span>FOUR TRACKS</span><b>·</b><span>YOUR PACE</span><b>·</b><span>NO TIME LIMIT</span></div>
+        <div class="intro-meta"><span>FOUR TRACKS</span><b>·</b><span>YOUR PACE</span><b>·</b><span>NO TIME LIMIT</span></div>
       </div>
       <div class="launch-showcase">
         <figure class="launch-stage">
@@ -73,10 +82,10 @@
       <button id="again" class="primary-button">ANOTHER RUN <span>↗</span></button><button id="change-driver" class="text-button">Choose track / difficulty / driver</button>
       <a class="result-site-link" href="https://roadster.coolsoftware.io" target="_blank" rel="noopener noreferrer">roadster.coolsoftware.io <span aria-hidden="true">↗</span></a>
     </div></section>
-    <section id="crash-panel" class="overlay center-panel hidden"><div class="dialog crash-dialog"><div class="eyebrow">LANDING THRUST MISSED</div><h2>HARD<br><em>LANDING.</em></h2><p>Fire your thrusters <strong>while descending</strong> to slow the fall. Watch for the <strong>THRUST NOW</strong> cue and tap Space again.</p><div class="crash-stats"><span>Your score is kept.</span><span>Return to the last checkpoint.</span></div><button id="retry" class="primary-button">RETRY CHECKPOINT <span>↗</span></button><button id="crash-restart" class="text-button">Restart the run</button><div class="pause-controls"><kbd>R</kbd> Retry · <kbd>SPACE</kbd> Landing thrust</div></div></section>
+    <section id="crash-panel" class="overlay center-panel hidden"><div class="dialog crash-dialog"><div id="crash-reason" class="eyebrow">LANDING THRUST MISSED</div><h2 id="crash-title">HARD<br><em>LANDING.</em></h2><p id="crash-description">Fire your thrusters while descending to slow the fall. Watch for THRUST NOW and tap Space again.</p><div class="crash-stats"><span>Your score is kept.</span><span>Return to the last checkpoint.</span></div><button id="retry" class="primary-button">RETRY CHECKPOINT <span>↗</span></button><button id="crash-restart" class="text-button">Restart the run</button><div class="pause-controls"><kbd>R</kbd> Retry · <kbd>SPACE</kbd> Landing thrust</div></div></section>
     <section id="error" class="overlay center-panel hidden"><div class="dialog"><h2>LET’S GET<br>YOU ROLLING.</h2><p id="error-text">Your browser could not start the 3D renderer. Enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary-button">TRY AGAIN <span>↗</span></button></div></section>
   </main>
   <div id="touch-controls" class="touch-controls hidden"><div class="steer-buttons"><button data-control="left" aria-label="Steer left">←</button><button data-control="right" aria-label="Steer right">→</button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake">BRAKE</button><button data-control="gas" aria-label="Accelerate">GAS</button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing">↑<small>THRUST</small></button></div></div>
-  <script type="module" src="main.js?v=launch-1"></script>
+  <script type="module" src="main.js?v=drive-2"></script>
 </body>
 </html>

@@ -23,7 +23,7 @@ test('coasting at the start has no deadline and does not move the car',()=>{
   assert.equal(r.s,7);assert.equal(r.state,'running');assert.ok(r.time>=120);
 });
 test('manual thrust requires speed, rolls, and a second descending thrust lands softly',()=>{
-  const r=manualRun();assert.equal(r.jump(),false);r.speed=55;r.s=10;
+  const r=manualRun();r.obstacles=[];assert.equal(r.jump(),false);r.speed=55;r.s=10;
   assert.equal(r.jump(),true);assert.equal(r.jump(),false);
   advance(r,JUMP_DURATION/2,gas);
   assert.ok(r.height>6);assert.ok(r.roll>2.9&&r.roll<3.5);assert.equal(r.landingWindow,false);
@@ -51,13 +51,16 @@ test('clearing an obstacle scores after safe landing and cannot be farmed',()=>{
 });
 test('a bus can be cleared with a well timed jump and landing thrust',()=>{
   const r=manualRun(),o=r.obstacles.find(o=>o.type==='bus');
-  r.offset=o.offset;r.s=o.s-41;r.speed=55;r.jump();landSafely(r);
+  r.offset=o.offset;r.s=o.s-41;r.speed=55;r.jump();
+  until(r,()=>r.landingWindow&&r.flightProgress>.85);assert.equal(r.jump(),true);
+  until(r,()=>r.jumpTime<0);assert.equal(r.state,'running');
   assert.equal(o.cleared,true);assert.equal(r.score,100);
 });
-test('an unjumped bus causes collision and awards no points',()=>{
+test('an unjumped bus explodes and awards no points',()=>{
   const r=manualRun(),o=r.obstacles.find(o=>o.type==='bus');
   r.offset=o.offset;r.s=o.s-9;r.speed=55;advance(r,.25,gas);
-  assert.equal(o.hit,true);assert.equal(r.score,0);assert.ok(r.speed<25);
+  assert.equal(o.hit,true);assert.equal(r.score,0);assert.equal(r.speed,0);assert.equal(r.state,'crashed');
+  assert.deepEqual(r.drainEvents().filter(event=>event.type!=='checkpoint'),[{type:'explode',reason:'collision',obstacle:'bus',flightKind:null}]);
 });
 test('a missed landing explodes, loses pending points, and waits for recovery',()=>{
   const r=manualRun(),o=r.obstacles[0];r.s=o.s-39;r.speed=55;r.jump();
@@ -67,7 +70,7 @@ test('a missed landing explodes, loses pending points, and waits for recovery',(
   assert.equal(r.pending.size,0);assert.equal(r.speed,0);
   const frozen=[r.time,r.s,r.height,r.charge];advance(r,10,gas);
   assert.deepEqual([r.time,r.s,r.height,r.charge],frozen);
-  assert.equal(r.drainEvents().filter(e=>e.type==='explode').length,1);
+  assert.deepEqual(r.drainEvents().filter(e=>e.type==='explode'),[{type:'explode',reason:'landing',flightKind:'manual'}]);
   assert.equal(r.jump(),false);r.start();assert.equal(r.state,'crashed');
 });
 test('ramp geometry and grounded climbing agree on a curved surface',()=>{
@@ -210,4 +213,37 @@ test('each of all five ramp bonuses is awarded once across repeated successful a
     }
   }
   assert.equal(r.score,5*150);assert.ok(r.ramps.every(ramp=>ramp.cleared));
+});
+
+for(const type of ['car','bus','barrier','pothole']){
+  test(type+': ground and low airborne impacts explode once, including previously cleared hazards',()=>{
+    for(const cleared of [false,true])for(const airborne of [false,true]){
+      const run=new Run(1000,{obstacles:[[.5,type,0]],ramps:[]});run.start();
+      const obstacle=run.obstacles[0];obstacle.cleared=cleared;
+      run.s=obstacle.s;run.speed=30;run.score=350;run.cleared=cleared?1:0;run.time=20;
+      run.pending.add(obstacle.id);if(airborne)run.jump();
+      run.update(STEP,{gas:true});
+      assert.equal(run.state,'crashed');assert.equal(run.speed,0);assert.equal(run.lateralVelocity,0);
+      assert.equal(run.pending.size,0);assert.equal(run.score,350);assert.equal(obstacle.cleared,cleared);
+      assert.equal(run.successfulJumps,0);assert.equal(run.landingWindow,false);assert.equal(run.landingArmed,false);
+      const frozen=[run.s,run.height,run.time,run.charge];advance(run,3,{gas:true});
+      assert.deepEqual([run.s,run.height,run.time,run.charge],frozen);
+      assert.deepEqual(run.drainEvents().filter(event=>event.type!=='jump'),[{type:'explode',reason:'collision',obstacle:type,flightKind:airborne?'manual':null}]);
+      assert.equal(run.recover(),true);assert.equal(run.state,'running');assert.equal(run.score,350);
+      assert.equal(run.time,frozen[2]);assert.equal(run.jumpTime,-1);assert.equal(obstacle.hit,false);
+      run.update(STEP,{gas:true});assert.equal(run.state,'running');
+    }
+  });
+}
+
+test('a collision on the landing frame cancels awards and cannot also land or finish',()=>{
+  const run=new Run(1000,{obstacles:[[.992,'car',0],[.992,'barrier',0]],ramps:[]});run.start();
+  run.speed=0;run.s=992;run.score=250;run.cleared=2;
+  run._launch('manual',0,1);run._flightDuration=STEP;
+  run.pending.add(run.obstacles[0].id);run.landingArmed=true;
+  run._landingHeight=.001;run._landingVelocity=-1;run._landingDuration=STEP;run._landingProgress=.99;
+  run.update(STEP);
+  assert.equal(run.state,'crashed');assert.equal(run.score,250);assert.equal(run.cleared,2);
+  assert.equal(run.pending.size,0);assert.equal(run.successfulJumps,0);
+  assert.deepEqual(run.drainEvents().filter(event=>event.type!=='jump'),[{type:'explode',reason:'collision',obstacle:'car',flightKind:'manual'}]);
 });

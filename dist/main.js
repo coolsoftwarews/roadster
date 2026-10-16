@@ -1,13 +1,14 @@
 import * as THREE from './vendor/three.module.min.js';
-import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=radio-1';
-import {DrivingAudio} from './audio.js?v=flight-3';
+import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=drive-2';
+import {DrivingAudio} from './audio.js?v=drive-2';
 import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=radio-1';
 import {renderResultCard} from './result-card.js?v=radio-1';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
 import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster} from './visual-effects.js?v=flight-3';
 
-import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=radio-1';
+import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=drive-2';
 import {setupRadio} from './radio-ui.js?v=radio-1';
+import {setupSoundControls} from './sound-ui.js?v=drive-2';
 import {TRACKS,getTrack} from './tracks.js?v=radio-1';
 import {installTrackScenery} from './track-scenery.js?v=radio-1';
 const $=id=>document.getElementById(id);
@@ -25,6 +26,7 @@ for(const option of DIFFICULTIES){
   label.append(control,caption);$('difficulty-options').appendChild(label);
 }
 $('difficulty-description').textContent=difficulty.description;
+$('difficulty-description').classList.toggle('hidden',!difficulty.description);
 $('hud-difficulty').textContent=difficulty.name.toUpperCase();
 document.title='Roadster Run — '+track.name;
 document.documentElement.style.setProperty('--accent',track.theme.accent);
@@ -240,20 +242,29 @@ function changeDriver(){
 }
 $('last-result').addEventListener('click',()=>{if(lastResult)showResults(lastResult);});$('change-driver').addEventListener('click',changeDriver);$('change-track').addEventListener('click',changeDriver);
 
-const {radio,close:closeRadio}=setupRadio({onOpen:()=>{clearInput();if(run.state==='running')pauseToggle();}});
+const {radio,close:closeRadio}=setupRadio({onOpen:()=>{soundControls.close();clearInput();if(run.state==='running')pauseToggle();}});
+const soundControls=setupSoundControls({audio,onOpen:()=>{closeRadio();clearInput();if(run.state==='running')pauseToggle();}});
 function clearInput(){for(const k in input)input[k]=false;document.querySelectorAll('.touch-controls .active').forEach(b=>b.classList.remove('active'));}
-async function startRun(){runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;message('YOUR ROAD. YOUR PACE.','W to drive. Space to jump; press again on descent to land.');}
-function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();radio.resume();closeRadio();}}
+async function startRun(){runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();soundControls.close();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;message('YOUR ROAD. YOUR PACE.','W to drive. Space to jump; press again on descent to land.');}
+function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();radio.resume();closeRadio();soundControls.close();}}
 function thrust(){
   if(run.jump())return;
   if(run.state!=='running')return;
-  if(run.jumpTime>=0){if(!run.landingArmed)message('WAIT FOR DESCENT','Press Space again when the landing cue turns orange.');return;}
+  if(run.jumpTime>=0){if(!run.landingArmed)message(run.verticalVelocity<0?'WAIT FOR LANDING CUE':'WAIT FOR DESCENT','Press Space again when the landing cue turns orange.');return;}
   if(run.speed<5)message('BUILD SOME SPEED','Accelerate before firing the thrusters.');
   else if(run.charge<.99)message('TANK RECHARGING','Landing thrust always has its own reserve.');
 }
+function setCrashCause(event){
+  const collision=event.reason==='collision';
+  const names={car:'CAR',bus:'BUS',barrier:'BARRIER',pothole:'POTHOLE'};
+  $('crash-reason').textContent=collision?(names[event.obstacle]||'OBSTACLE')+' IMPACT':'LANDING THRUST MISSED';
+  const emphasis=document.createElement('em');emphasis.textContent=collision?'IMPACT.':'LANDING.';
+  $('crash-title').replaceChildren(document.createTextNode('HARD'),document.createElement('br'),emphasis);
+  $('crash-description').textContent=collision?'Jump over obstacles or steer around them. Contact with cars, buses, barriers, or potholes causes an explosion.':'Fire your thrusters while descending to slow the fall. Watch for THRUST NOW and tap Space again.';
+}
 function retryCheckpoint(){if(run.state==='crashed')run.recover();}
 
-function mute(){const muted=audio.toggle();$('sound').classList.toggle('muted',muted);$('sound').setAttribute('aria-label',muted?'Unmute driving sounds':'Mute driving sounds');$('sound').setAttribute('aria-pressed',String(muted));}
+function mute(){soundControls.toggleMute();}
 function finish(){
   const previous=readBest(),isBest=run.time<previous.time||run.score>previous.score;
   saveBest(track.id,{time:Math.min(run.time,previous.time),score:Math.max(run.score,previous.score)},difficulty.id);
@@ -263,12 +274,13 @@ function finish(){
   audio.reward();
 }
 $('retry').addEventListener('click',retryCheckpoint);$('crash-restart').addEventListener('click',startRun);
-$('start').addEventListener('click',startRun);$('again').addEventListener('click',startRun);$('restart').addEventListener('click',startRun);$('pause').addEventListener('click',pauseToggle);$('resume').addEventListener('click',pauseToggle);$('sound').addEventListener('click',mute);$('touch-thrust').addEventListener('pointerdown',e=>{e.preventDefault();thrust();});
+$('start').addEventListener('click',startRun);$('again').addEventListener('click',startRun);$('restart').addEventListener('click',startRun);$('pause').addEventListener('click',pauseToggle);$('resume').addEventListener('click',pauseToggle);$('touch-thrust').addEventListener('pointerdown',e=>{e.preventDefault();thrust();});
 const keyMap={KeyW:'gas',ArrowUp:'gas',KeyS:'brake',ArrowDown:'brake',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
 window.addEventListener('keydown',e=>{
   if(e.target instanceof Element&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
   if(!$('radio-panel').classList.contains('hidden')&&e.code==='Escape'){e.preventDefault();closeRadio();return;}
-  if(e.target instanceof Element&&e.target.closest('#radio-panel'))return;
+  if(!$('sound-panel').classList.contains('hidden')&&e.code==='Escape'){e.preventDefault();soundControls.close();return;}
+  if(e.target instanceof Element&&e.target.closest('#radio-panel,#sound-panel'))return;
   const driving=run.state==='running';
   if(keyMap[e.code]&&driving){e.preventDefault();input[keyMap[e.code]]=true;}
   if(e.code==='Space'&&!driving)return;
@@ -292,7 +304,7 @@ function animate(now){
     if(event.type==='landingThrust'){audio.landingThrust();thrustGlow=.8;shake=.14;fx.thrust(eventPosition);}
     if(event.type==='land'){audio.land();shake=.16;fx.land(eventPosition);if(event.points){audio.reward();message('+'+event.points,event.rampBonus?'RAMP LANDED · CLEAN TOUCHDOWN':'CLEAN LANDING','reward');}}
     if(event.type==='hit'){audio.collision();shake=.3;fx.collision(eventPosition);message(event.obstacle==='pothole'?'WATCH THE ROAD':'CONTACT','Build speed, then jump earlier.','warning');}
-    if(event.type==='explode'){audio.explosion();fx.explode(eventPosition);shake=1.4;clearInput();car.visible=false;shadow.visible=false;crashDelay=1.2;flashTime=.15;$('impact-flash').classList.add('active');$('touch-controls').classList.add('hidden');}
+    if(event.type==='explode'){setCrashCause(event);audio.explosion();fx.explode(eventPosition);shake=1.4;clearInput();car.visible=false;shadow.visible=false;crashDelay=1.2;flashTime=.15;$('impact-flash').classList.add('active');$('touch-controls').classList.add('hidden');}
     if(event.type==='recover'){cameraInitialized=false;fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;$('crash-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');clearInput();message('BACK ON TRACK','Score kept. Fire thrust on descent to land safely.');}
     if(event.type==='checkpoint')message('CHECKPOINT','Your progress is safe.');
     if(event.type==='finish')finish();
@@ -322,7 +334,7 @@ function animate(now){
   if(run.landingWindow&&!landingCuePlayed){audio.warning();landingCuePlayed=true;}
   $('speed-lines').style.opacity=run.state==='running'?clamp((run.speed-40)/45,0,.45):0;
   const inFlight=run.jumpTime>=0&&run.state!=='crashed';document.body.classList.toggle('in-flight',inFlight);$('flight-panel').classList.toggle('hidden',!inFlight);
-  if(inFlight){$('flight-panel').classList.toggle('urgent',run.landingWindow);$('flight-panel').classList.toggle('safe',run.landingArmed);$('flight-title').textContent=run.landingArmed?'LANDING SAFE':run.landingWindow?'THRUST NOW':'CLIMBING';$('flight-instruction').textContent=run.landingArmed?'Hold your line':run.landingWindow?'SPACE · LAND NOW':'Wait for descent';$('flight-kind').textContent=run.flightKind==='ramp'?'RAMP':'FLIGHT';$('altitude').textContent=run.height.toFixed(1);$('flight-meter-fill').style.width=(run.landingArmed?100:run.flightProgress*100)+'%';}
+  if(inFlight){$('flight-panel').classList.toggle('urgent',run.landingWindow);$('flight-panel').classList.toggle('safe',run.landingArmed);$('flight-title').textContent=run.landingArmed?'LANDING SAFE':run.landingWindow?'THRUST NOW':run.verticalVelocity<0?'DESCENDING':'CLIMBING';$('flight-instruction').textContent=run.landingArmed?'Hold your line':run.landingWindow?'SPACE · LAND NOW':run.verticalVelocity<0?'Wait for THRUST NOW':'Wait for descent';$('flight-kind').textContent=run.flightKind==='ramp'?'RAMP':'FLIGHT';$('altitude').textContent=run.height.toFixed(1);$('flight-meter-fill').style.width=(run.landingArmed?100:run.flightProgress*100)+'%';}
   if(renderFrames++%3===0){
     $('score').textContent=String(run.score).padStart(4,'0');$('timer').textContent=formatTime(run.time);$('speed').textContent=Math.round(run.speed*3.6);$('cleared').textContent=run.cleared;
     const pct=clamp(run.s/length*100,0,100);$('progress-bar').style.width=pct+'%';$('progress-label').textContent=Math.floor(pct)+'%';$('charge-bar').style.width=run.charge*100+'%';

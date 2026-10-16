@@ -1,11 +1,36 @@
+import {SOUND_CHANNELS,loadSoundSettings,saveSoundSettings,validVolume,clampVolume} from './sound-settings.js?v=sound-1';
+
 const clamp=(v,min=0,max=1)=>Math.max(min,Math.min(max,v));
 
 export class DrivingAudio {
-  constructor(){this.ctx=null;this.muted=false;this.active=false;this.voices=new Set();this.lastWarning=-10;}
+  constructor({storage}={}){
+    this.ctx=null;this.active=false;this.voices=new Set();this.lastWarning=-10;
+    this._storage=storage;this._settings=loadSoundSettings(storage);
+  }
+
+  get settings(){return {...this._settings};}
+  get muted(){return !this._settings.enabled;}
+  set muted(value){if(typeof value==='boolean')this.setEnabled(!value);}
+
+  setEnabled(enabled){
+    if(typeof enabled!=='boolean')return this.settings;
+    this._settings.enabled=enabled;
+    if(this.ctx)this.master.gain.setTargetAtTime(enabled?.72:0,this.ctx.currentTime,.025);
+    saveSoundSettings(this._settings,this._storage);
+    return this.settings;
+  }
+
+  setVolume(channel,value){
+    if(!SOUND_CHANNELS.includes(channel)||!validVolume(value))return this.settings;
+    this._settings[channel]=clampVolume(value);
+    if(this.ctx)this.channels[channel].gain.setTargetAtTime(this._settings[channel],this.ctx.currentTime,.025);
+    saveSoundSettings(this._settings,this._storage);
+    return this.settings;
+  }
 
   async start(){
     if(!this.ctx){
-      const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      const AC=globalThis.AudioContext||globalThis.webkitAudioContext;if(!AC)return;
       const c=this.ctx=new AC();
       this.mix=c.createGain();
       // Keep the layered effects full without clipping the speakers.
@@ -15,6 +40,11 @@ export class DrivingAudio {
       this.master=c.createGain();this.master.gain.value=this.muted?0:.72;
       const highpass=c.createBiquadFilter();highpass.type='highpass';highpass.frequency.value=28;
       this.mix.connect(this.compressor).connect(highpass).connect(this.master).connect(c.destination);
+      // Shared category buses also adjust sounds that have already started.
+      this.channels=Object.fromEntries(SOUND_CHANNELS.map(channel=>{
+        const bus=c.createGain();bus.gain.value=this._settings[channel];bus.connect(this.mix);
+        return[channel,bus];
+      }));
 
       this.noiseBuffer=c.createBuffer(2,c.sampleRate*3,c.sampleRate);
       for(let ch=0;ch<2;ch++){
@@ -26,28 +56,27 @@ export class DrivingAudio {
       this.inverter=this._continuousTone('sine',380,'lowpass',2400);
       this.road=this._continuousNoise('lowpass',400,.7);
       this.wind=this._continuousNoise('bandpass',700,.55);
-      this.scrub=this._continuousNoise('bandpass',1400,1.5);
-      this.squeal=this._continuousTone('sine',720,'lowpass',2600);
+      this.scrub=this._continuousNoise('bandpass',1400,1.5,'tires');
+      this.squeal=this._continuousTone('sine',720,'lowpass',2600,'tires');
     }
     if(this.ctx.state==='suspended')await this.ctx.resume();
     this.active=true;
   }
 
-  _continuousTone(type,frequency,filterType,cutoff){
+  _continuousTone(type,frequency,filterType,cutoff,channel='engine'){
     const c=this.ctx,source=c.createOscillator(),filter=c.createBiquadFilter(),gain=c.createGain();
     source.type=type;source.frequency.value=frequency;filter.type=filterType;filter.frequency.value=cutoff;gain.gain.value=0;
-    source.connect(filter).connect(gain).connect(this.mix);source.start();return{source,filter,gain};
+    source.connect(filter).connect(gain).connect(this.channels[channel]);source.start();return{source,filter,gain};
   }
 
-  _continuousNoise(type,frequency,q){
+  _continuousNoise(type,frequency,q,channel='engine'){
     const c=this.ctx,source=c.createBufferSource(),filter=c.createBiquadFilter(),gain=c.createGain();
     source.buffer=this.noiseBuffer;source.loop=true;filter.type=type;filter.frequency.value=frequency;filter.Q.value=q;gain.gain.value=0;
-    source.connect(filter).connect(gain).connect(this.mix);source.start(0,Math.random()*2);return{source,filter,gain};
+    source.connect(filter).connect(gain).connect(this.channels[channel]);source.start(0,Math.random()*2);return{source,filter,gain};
   }
 
   toggle(){
-    this.muted=!this.muted;
-    if(this.ctx)this.master.gain.setTargetAtTime(this.muted?0:.72,this.ctx.currentTime,.04);
+    this.setEnabled(this.muted);
     return this.muted;
   }
 
@@ -66,9 +95,9 @@ export class DrivingAudio {
     smooth(this.inverter.source.frequency,340+v*1470,.17);
     smooth(this.inverter.gain.gain,moving?v*.011*(throttle?1:.5):0,.14);
     smooth(this.road.filter.frequency,180+v*750);
-    smooth(this.road.gain.gain,moving?v*.14*ground:0,.15);
+    smooth(this.road.gain.gain,moving?v*.075*ground:0,.15);
     smooth(this.wind.filter.frequency,330+v*1050);
-    smooth(this.wind.gain.gain,moving?v*v*(airborne?.105:.065):0,.2);
+    smooth(this.wind.gain.gain,moving?v*v*(airborne?.075:.045):0,.2);
     smooth(this.scrub.filter.frequency,950+slip*1400+wobble*120,.035);
     smooth(this.scrub.gain.gain,moving?slip*.22*ground*(.9+wobble*.1):0,.045);
     smooth(this.squeal.source.frequency,650+slip*590+wobble*70,.04);
@@ -87,43 +116,43 @@ export class DrivingAudio {
     source.stop(end);
   }
 
-  _noise(duration,volume,frequency,{end=frequency,type='bandpass',q=.65,delay=0,attack=.012}={}){
+  _noise(duration,volume,frequency,{end=frequency,type='bandpass',q=.65,delay=0,attack=.012,channel='effects'}={}){
     if(!this.ctx)return;
     const c=this.ctx,t=c.currentTime+delay,source=c.createBufferSource(),filter=c.createBiquadFilter(),gain=c.createGain();
     source.buffer=this.noiseBuffer;source.loop=true;filter.type=type;filter.Q.value=q;
     filter.frequency.setValueAtTime(frequency,t);filter.frequency.exponentialRampToValueAtTime(Math.max(35,end),t+duration);
     gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),t+attack);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
-    source.connect(filter).connect(gain).connect(this.mix);
+    source.connect(filter).connect(gain).connect(this.channels[channel]);
     this._play(source,[filter,gain],t,t+duration+.025,Math.random()*2);
   }
 
-  _tone(frequency,volume,duration,{end=frequency,type='sine',delay=0,attack=.006}={}){
+  _tone(frequency,volume,duration,{end=frequency,type='sine',delay=0,attack=.006,channel='effects'}={}){
     if(!this.ctx)return;
     const c=this.ctx,t=c.currentTime+delay,source=c.createOscillator(),gain=c.createGain();
     source.type=type;source.frequency.setValueAtTime(frequency,t);source.frequency.exponentialRampToValueAtTime(Math.max(24,end),t+duration);
     gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),t+attack);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
-    source.connect(gain).connect(this.mix);this._play(source,[gain],t,t+duration+.025);
+    source.connect(gain).connect(this.channels[channel]);this._play(source,[gain],t,t+duration+.025);
   }
 
   thrust(){
-    this._noise(.16,.29,2600,{end:800});
-    this._noise(1.22,.53,1050,{end:380,attack:.035,q:.5});
-    this._noise(.85,.2,4500,{end:1600,attack:.04});
-    this._tone(104,.27,.76,{end:36,type:'triangle',attack:.018});
-    this._tone(51,.25,.53,{end:29,attack:.014});
+    this._noise(.16,.29,2600,{end:800,channel:'thrust'});
+    this._noise(1.22,.53,1050,{end:380,attack:.035,q:.5,channel:'thrust'});
+    this._noise(.85,.2,4500,{end:1600,attack:.04,channel:'thrust'});
+    this._tone(104,.27,.76,{end:36,type:'triangle',attack:.018,channel:'thrust'});
+    this._tone(51,.25,.53,{end:29,attack:.014,channel:'thrust'});
   }
 
   ramp(){
-    this._noise(.58,.25,450,{end:2600,attack:.055});
-    this._tone(95,.12,.4,{end:320,type:'triangle',attack:.025});
-    this._noise(.16,.18,220,{type:'lowpass'});
+    this._noise(.58,.25,450,{end:2600,attack:.055,channel:'thrust'});
+    this._tone(95,.12,.4,{end:320,type:'triangle',attack:.025,channel:'thrust'});
+    this._noise(.16,.18,220,{type:'lowpass',channel:'thrust'});
   }
 
   landingThrust(){
-    this._noise(.64,.62,1700,{end:420,attack:.018,q:.5});
-    this._noise(.26,.2,4200,{end:1600});
-    this._tone(135,.3,.5,{end:42,type:'triangle',attack:.01});
-    this._tone(67,.24,.42,{end:30,attack:.012});
+    this._noise(.64,.62,1700,{end:420,attack:.018,q:.5,channel:'thrust'});
+    this._noise(.26,.2,4200,{end:1600,channel:'thrust'});
+    this._tone(135,.3,.5,{end:42,type:'triangle',attack:.01,channel:'thrust'});
+    this._tone(67,.24,.42,{end:30,attack:.012,channel:'thrust'});
   }
 
   land(){

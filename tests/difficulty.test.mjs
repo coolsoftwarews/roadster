@@ -33,7 +33,7 @@ test('difficulty defaults to Easy and preserves all original settings and layout
   }
 });
 
-test('Medium and Hard change actual speed, recharge, checkpoint spacing, and landing response',()=>{
+test('difficulty changes speed and checkpoints while thrust timing stays responsive in every mode',()=>{
   const observations=[];
   for(const difficulty of DIFFICULTIES){
     const speed=clearRun(difficulty.id);advance(speed,20,{gas:true});
@@ -52,8 +52,8 @@ test('Medium and Hard change actual speed, recharge, checkpoint spacing, and lan
   }
   for(let i=1;i<observations.length;i++){
     assert.ok(observations[i].speed>observations[i-1].speed);
-    assert.ok(observations[i].charge<observations[i-1].charge);
-    assert.ok(observations[i].cue>observations[i-1].cue);
+    assert.equal(observations[i].charge,observations[0].charge);
+    assert.equal(observations[i].cue,observations[0].cue);
   }
 });
 
@@ -139,3 +139,41 @@ for(const track of TRACKS)for(const difficulty of DIFFICULTIES){
     assert.equal(run.jumpTime,-1);
   });
 }
+
+for(const difficulty of DIFFICULTIES){
+  test(difficulty.name+': launch and descending thrust respond immediately without buffered input',()=>{
+    const run=clearRun(difficulty.id);run.speed=40;run.charge=0;
+    assert.equal(run.jump(),false);advance(run,RECHARGE_TIME,{gas:true});
+    assert.equal(run.jumpTime,-1,'a rejected press must not queue a later launch');
+    assert.ok(Math.abs(run.charge-1)<1e-12);assert.equal(run.jump(),true);
+    assert.equal(run.jumpTime,0);assert.ok(run.verticalVelocity>0);
+    assert.deepEqual(run.drainEvents().map(event=>event.type),['jump']);
+    advance(run,JUMP_DURATION*.60,{gas:true});assert.equal(run.jump(),false);
+    assert.equal(run.landingArmed,false);until(run,()=>run.landingWindow);
+    assert.ok(run.flightProgress<.63,'all modes accept the same early descent burn');
+    run.charge=0;assert.equal(run.jump(),true);assert.equal(run.landingArmed,true);
+    assert.equal(run.landingWindow,false);assert.equal(run.jump(),false);
+    assert.deepEqual(run.drainEvents().map(event=>event.type),['landingThrust']);
+    until(run,()=>run.jumpTime<0);assert.equal(run.state,'running');
+    assert.equal(run.drainEvents().filter(event=>event.type==='land').length,1);
+  });
+}
+
+test('every circuit checkpoint recovers clear of solid obstacles, including previously scored hazards',()=>{
+  let shifted=0;
+  for(const track of TRACKS)for(const difficulty of DIFFICULTIES){
+    const run=new Run(lengthOf(track),track,difficulty.id);run.start();
+    for(const obstacle of run.obstacles)obstacle.cleared=true;
+    for(let checkpoint=difficulty.checkpointSpacing;checkpoint<run.length;checkpoint+=difficulty.checkpointSpacing){
+      run.checkpoint=checkpoint;run.state='crashed';run.score=700;run.time=25;
+      assert.equal(run.recover(),true);
+      if(run.s<checkpoint)shifted++;
+      for(const obstacle of run.obstacles){
+        assert.ok(Math.abs(run.s-obstacle.s)>=obstacle.length/2+2.5||Math.abs(obstacle.offset)>=obstacle.width/2+1.1,'recovery never intersects a hazard');
+      }
+      advance(run,.5,{gas:true});assert.equal(run.state,'running',track.id+' / '+difficulty.id+' checkpoint '+checkpoint);
+      assert.equal(run.score,700);assert.ok(run.time>25);
+    }
+  }
+  assert.ok(shifted>0,'real circuit checkpoints exercise the recovery placement correction');
+});

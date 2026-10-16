@@ -1,4 +1,4 @@
-import {getDifficulty} from './difficulty.js?v=radio-1';
+import {getDifficulty} from './difficulty.js?v=drive-2';
 
 export const ROAD_WIDTH = 19;
 export const MAX_SPEED = 73;
@@ -92,7 +92,15 @@ export class Run {
   }
   recover(){
     if((this.state!=='running'&&this.state!=='crashed')||(this.state==='running'&&this.recoverCooldown>0))return false;
-    this.state='running';this.s=this.checkpoint;this.speed=0;this.offset=0;this.lateralVelocity=0;this.height=0;this.jumpTime=-1;this.roll=0;this.pending.clear();this.recoverCooldown=1;this.offroadTime=0;
+    // A checkpoint may be reached while driving beside a hazard. Returning to
+    // the road center must leave room to accelerate and jump, even after scoring it.
+    let recoveryS=this.checkpoint;
+    for(const obstacle of [...this.obstacles].sort((a,b)=>b.s-a.s)){
+      if(Math.abs(obstacle.offset)<obstacle.width/2+1.1&&recoveryS>obstacle.s-obstacle.length/2-14.5&&recoveryS<obstacle.s+obstacle.length/2+2.5){
+        recoveryS=Math.max(7,obstacle.s-obstacle.length/2-14.5);
+      }
+    }
+    this.state='running';this.s=recoveryS;this.speed=0;this.offset=0;this.lateralVelocity=0;this.height=0;this.jumpTime=-1;this.roll=0;this.pending.clear();this.recoverCooldown=1;this.offroadTime=0;
     this.verticalVelocity=0;this.flightProgress=0;this.flightKind=null;this.landingWindow=false;this.landingArmed=false;this.rampId=null;this._edgeFall=false;
     for(const o of this.obstacles)o.hit=false;
     this.events.push({type:'recover'});return true;
@@ -116,11 +124,16 @@ export class Run {
     this.roll=2*Math.PI*(phase*phase*(3-2*phase));
     return this.flightProgress>=1;
   }
+  _explode(reason,obstacle){
+    if(this.state!=='running')return;
+    this.state='crashed';this.speed=0;this.lateralVelocity=0;this.pending.clear();
+    this.landingWindow=false;this.landingArmed=false;
+    this.events.push({type:'explode',reason,flightKind:this.flightKind,...(obstacle?{obstacle}: {})});
+  }
   _touchdown(surfaceHeight=0){
     this.height=surfaceHeight;this.roll=0;this.jumpTime=-1;this.verticalVelocity=0;this.flightProgress=1;this.landingWindow=false;
     if(!this.landingArmed){
-      this.state='crashed';this.speed=0;this.lateralVelocity=0;this.pending.clear();
-      this.events.push({type:'explode',flightKind:this.flightKind});return;
+      this._explode('landing');return;
     }
     const awarded=[...this.pending].filter(id=>{const o=this.obstacles.find(o=>o.id===id);return o&&!o.hit&&!o.cleared&&this.s>o.s+o.length/2+2;});
     for(const id of awarded){this.obstacles.find(o=>o.id===id).cleared=true;this.cleared++;this.score+=100;}
@@ -177,12 +190,11 @@ export class Run {
     for(const o of this.obstacles){
       const inLong=Math.abs(this.s-o.s)<o.length/2+2.5 || (prevS<o.s&&this.s>o.s);
       const inLat=Math.abs(this.offset-o.offset)<o.width/2+1.1;
-      if(inLong&&inLat&&!o.cleared){
-        if(this.height>o.height+.5&&this.jumpTime>=0&&!o.hit)this.pending.add(o.id);
-        else if(this.height<=o.height+.5&&!o.hit){
-          o.hit=true;this.pending.delete(o.id);this.speed*=o.type==='pothole'?.48:.23;
-          this.events.push({type:'hit',obstacle:o.type});
+      if(inLong&&inLat){
+        if(this.height<=o.height+.5){
+          o.hit=true;this._explode('collision',o.type);return;
         }
+        if(this.jumpTime>=0&&!o.hit&&!o.cleared)this.pending.add(o.id);
       }
       if(this.s<o.s-o.length/2-8)o.hit=false;
     }
