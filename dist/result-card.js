@@ -1,5 +1,6 @@
-import { formatTime } from './game-logic.js?v=tracks-1';
-import { getTrack } from './tracks.js?v=tracks-1';
+import { formatTime } from './game-logic.js?v=radio-1';
+import { getTrack } from './tracks.js?v=radio-1';
+import { getDifficulty } from './difficulty.js?v=radio-1';
 
 const FONT = 'Arial, Helvetica, sans-serif';
 const INK = '#fff5e7';
@@ -221,7 +222,7 @@ export function renderResultCard(canvas, result) {
   context.fillStyle = ORANGE;
   context.fillText('/', 90, 38);
   label(context, 'ROADSTER RUN', 128, 43, INK, 24);
-  label(context, `${track.name.toUpperCase()}  /  ${track.number}`, 130, 76, MUTED, 11);
+  label(context, `${track.name.toUpperCase()}  /  ${getDifficulty(result.difficultyId).name.toUpperCase()}`, 130, 76, MUTED, 11);
   rounded(context, 60, 122, 169, 27, 3, '#ff865620');
   label(context, 'CIRCUIT COMPLETE', 72, 130, '#ffb78c', 11);
 

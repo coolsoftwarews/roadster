@@ -1,11 +1,13 @@
-import {formatTime} from './game-logic.js?v=tracks-1';
-import {TRACKS,getTrack} from './tracks.js?v=tracks-1';
+import {formatTime} from './game-logic.js?v=radio-1';
+import {TRACKS,getTrack} from './tracks.js?v=radio-1';
+import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=radio-1';
 
 export const DRIVER_STORAGE_KEY='roadster-run-driver';
 export const RESULT_STORAGE_KEY='roadster-run-last-result';
 export const BEST_STORAGE_PREFIX='roadster-run-best-';
 export const GAME_URL='https://roadster.coolsoftware.io';
 const knownTrack=id=>TRACKS.some(track=>track.id===id);
+const knownDifficulty=id=>DIFFICULTIES.some(difficulty=>difficulty.id===id);
 
 // Count UTF-16 units like the input's maxlength, without keeping a split emoji.
 export function normalizeDriver(value){
@@ -38,24 +40,29 @@ function normalizeBest(value){
   if(!Number.isSafeInteger(value.score)||value.score<0)return null;
   return {time:value.time,score:value.score};
 }
-export function loadBest(trackId,storage){
-  if(!knownTrack(trackId))return emptyBest();
+export function loadBest(trackId,difficultyId='easy',storage){
+  if(!knownTrack(trackId)||!knownDifficulty(difficultyId))return emptyBest();
   try{
     const source=storage??globalThis.localStorage;
-    let best=null;
-    try{best=normalizeBest(JSON.parse(source.getItem(BEST_STORAGE_PREFIX+trackId)));}catch{}
+    const read=key=>{try{return normalizeBest(JSON.parse(source.getItem(key)));}catch{return null;}};
+    const best=read(BEST_STORAGE_PREFIX+trackId+'-'+difficultyId);
     if(best)return best;
-    // The original single-track record belongs only to Canyon Circuit.
-    if(trackId==='canyon')return normalizeBest(JSON.parse(source.getItem('roadster-run-best')))||emptyBest();
+    // Before the picker every race used Easy physics. Legacy records never seed
+    // a harder difficulty, and the original single-track key belongs to Canyon.
+    if(difficultyId==='easy'){
+      const legacy=read(BEST_STORAGE_PREFIX+trackId);
+      if(legacy)return legacy;
+      if(trackId==='canyon')return read('roadster-run-best')||emptyBest();
+    }
   }catch{}
   return emptyBest();
 }
-export function saveBest(trackId,value,storage){
+export function saveBest(trackId,value,difficultyId='easy',storage){
   const candidate=normalizeBest(value);
-  if(!knownTrack(trackId)||!candidate)return false;
-  const previous=loadBest(trackId,storage);
+  if(!knownTrack(trackId)||!knownDifficulty(difficultyId)||!candidate)return false;
+  const previous=loadBest(trackId,difficultyId,storage);
   const best={time:Math.min(candidate.time,previous.time),score:Math.max(candidate.score,previous.score)};
-  try{(storage??globalThis.localStorage).setItem(BEST_STORAGE_PREFIX+trackId,JSON.stringify(best));return true;}
+  try{(storage??globalThis.localStorage).setItem(BEST_STORAGE_PREFIX+trackId+'-'+difficultyId,JSON.stringify(best));return true;}
   catch{return false;}
 }
 
@@ -66,9 +73,10 @@ export function normalizeResult(value){
   if(typeof value.time!=='number'||!Number.isFinite(value.time)||value.time<0||value.time>Number.MAX_SAFE_INTEGER)return null;
   if(value.cleared>value.total||value.ramps>value.totalRamps)return null;
   const trackId=value.trackId===undefined?'canyon':value.trackId;
-  if(!knownTrack(trackId))return null;
+  const difficultyId=value.difficultyId===undefined?'easy':value.difficultyId;
+  if(!knownTrack(trackId)||!knownDifficulty(difficultyId))return null;
   return {
-    trackId,driver:displayDriver(value.driver),score:value.score,time:value.time,
+    trackId,difficultyId,driver:displayDriver(value.driver),score:value.score,time:value.time,
     cleared:value.cleared,total:value.total,ramps:value.ramps,
     totalRamps:value.totalRamps,successfulJumps:value.successfulJumps
   };
@@ -105,7 +113,13 @@ function shortenIdentity(identity,budget){
 export function buildShareText(value){
   const result=normalizeResult(value);
   if(!result)throw new TypeError('A valid race result is required to share.');
-  const stats=` completed Roadster Run!\n${getTrack(result.trackId).name}\n${result.score} points | ${formatTime(result.time)}\n${result.cleared}/${result.total} obstacles | ${result.ramps}/${result.totalRamps} ramps | ${result.successfulJumps} safe jumps`;
+  const heading=` completed Roadster Run!\n${getTrack(result.trackId).name} · ${getDifficulty(result.difficultyId).name}\n${result.score} points | ${formatTime(result.time)}`;
+  let stats=heading+`\n${result.cleared}/${result.total} obstacles | ${result.ramps}/${result.totalRamps} ramps | ${result.successfulJumps} safe jumps`;
+  // Even maximum safe integers must leave room for an identity and the URL.
+  // The saved result/card retain full totals if a very large result needs this
+  // shorter post summary.
+  if(shareTextWeight(stats)>224)stats=heading+`\n${result.cleared} obstacles | ${result.ramps} ramps | ${result.successfulJumps} safe jumps`;
+
   const identity=shortenIdentity(result.driver,280-24-shareTextWeight(stats));
   return identity+stats;
 }

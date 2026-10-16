@@ -1,3 +1,5 @@
+import {getDifficulty} from './difficulty.js?v=radio-1';
+
 export const ROAD_WIDTH = 19;
 export const MAX_SPEED = 73;
 export const JUMP_DURATION = 1.66;
@@ -27,8 +29,35 @@ export function rampSurfaceHeight(ramp,s) {
   const t=clamp((s-(ramp.s-ramp.length))/ramp.length,0,1);
   return ramp.height*t*t;
 }
+function addDifficultyObstacles(length,obstacles,ramps,count){
+  if(!count)return obstacles;
+  const additions=[['car',-3.5],['pothole',3],['car',3.5],['bus',-3],['pothole',-3],['car',3]];
+  const result=[...obstacles];
+  for(let index=0;index<count;index++){
+    const [type,offset]=additions[index%additions.length];
+    const addition=makeObstacles(length,[[0,type,offset]])[0];
+    const radius=addition.length/2;
+    let position=null,bestClearance=-1;
+    // Fill the largest available gap first. Fixed sampling and tie order make
+    // replay layouts identical, with Medium's hazards also present in Hard.
+    for(let s=80;s<length-70;s+=5){
+      if(ramps.some(ramp=>s+radius>=ramp.s-60&&s-radius<=ramp.s+170))continue;
+      const clearance=Math.min(s-30,length-30-s,...result.map(obstacle=>Math.abs(obstacle.s-s)-obstacle.length/2));
+      if(clearance>=48+radius&&clearance>bestClearance){position=s;bestClearance=clearance;}
+    }
+    // Very short custom tracks can have fewer safe gaps than the real circuits.
+    if(position===null)break;
+    result.push({...addition,s:position});
+  }
+  return result.sort((a,b)=>a.s-b.s).map((obstacle,id)=>({...obstacle,id}));
+}
 export class Run {
-  constructor(length, track={}) { this.length=length; this.obstacles=makeObstacles(length,track.obstacles); this.ramps=makeRamps(length,track.ramps); this.reset(); }
+  constructor(length, track={}, difficulty='easy') {
+    this.length=length;this.difficulty=getDifficulty(difficulty);
+    this.ramps=makeRamps(length,track.ramps);
+    this.obstacles=addDifficultyObstacles(length,makeObstacles(length,track.obstacles),this.ramps,this.difficulty.extraObstacles);
+    this.reset();
+  }
   reset(){
     this.s=7;this.offset=0;this.speed=0;this.lateralVelocity=0;this.time=0;this.score=0;this.cleared=0;this.successfulJumps=0;
     this.height=0;this.jumpTime=-1;this.charge=1;this.checkpoint=7;this.state='ready';this.events=[];this.pending=new Set();this.recoverCooldown=0;this.offroadTime=0;this.roll=0;this.distance=0;
@@ -81,7 +110,7 @@ export class Run {
       this.height=Math.max(0,this._launchHeight+this._launchVelocity*this.jumpTime-.5*this._flightGravity*this.jumpTime*this.jumpTime);
       this.verticalVelocity=this._launchVelocity-this._flightGravity*this.jumpTime;
       this.flightProgress=clamp(this.jumpTime/this._flightDuration,0,1);
-      this.landingWindow=this.verticalVelocity<0&&(this._edgeFall||this.flightProgress>=LANDING_WINDOW_START)&&this.flightProgress<1;
+      this.landingWindow=this.verticalVelocity<0&&(this._edgeFall||this.flightProgress>=this.difficulty.landingWindowStart)&&this.flightProgress<1;
     }
     const phase=clamp((this.flightProgress-.1)/.8,0,1);
     this.roll=2*Math.PI*(phase*phase*(3-2*phase));
@@ -106,12 +135,12 @@ export class Run {
     if(this.state!=='running'||!Number.isFinite(dt))return;
     dt=clamp(dt,0,.04);if(dt===0)return;
     this.time+=dt;this.recoverCooldown=Math.max(0,this.recoverCooldown-dt);
-    this.charge=clamp(this.charge+dt/RECHARGE_TIME,0,1);
+    this.charge=clamp(this.charge+dt/this.difficulty.rechargeTime,0,1);
     const airborne=this.jumpTime>=0;
     const offroad=Math.abs(this.offset)>ROAD_WIDTH/2-.5;
     const gas=input.gas?1:0, brake=input.brake?1:0;
     const accel=gas*(28-this.speed*.19)-brake*48-(this.speed>0?2.2+this.speed*.035:0)-(offroad&&!airborne?20:0);
-    this.speed=clamp(this.speed+accel*dt,0,MAX_SPEED);
+    this.speed=clamp(this.speed+accel*dt,0,this.difficulty.maxSpeed);
     // Positive offset is driver-left in the track coordinate frame.
     const steer=(input.left?1:0)-(input.right?1:0);
     const targetLateral=steer*Math.min(12,this.speed*.36)*(airborne?.68:1);
@@ -161,7 +190,7 @@ export class Run {
     if(this.state!=='running')return;
     if(this.jumpTime<0&&Math.abs(this.offset)>ROAD_WIDTH/2+2)this.offroadTime+=dt;else this.offroadTime=0;
     if(Math.abs(this.offset)>ROAD_WIDTH/2+8||this.offroadTime>1.3)this.recover();
-    const cp=Math.floor(this.s/400)*400;
+    const cp=Math.floor(this.s/this.difficulty.checkpointSpacing)*this.difficulty.checkpointSpacing;
     if(cp>this.checkpoint&&this.jumpTime<0){this.checkpoint=cp;this.events.push({type:'checkpoint'});}
     if(this.s>=this.length-12&&this.jumpTime<0){this.s=this.length-12;this.state='finished';this.speed=0;this.events.push({type:'finish'});}
   }

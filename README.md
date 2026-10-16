@@ -1,6 +1,6 @@
 # Roadster Run
 
-A self-contained 3D browser game: four selectable circuits, 18 obstacles per track, jump-and-roll thrusters, reactive driving audio and persistent personal bests for each circuit.
+A self-contained 3D browser game: four selectable circuits, 18–30 obstacles per track, jump-and-roll thrusters, reactive driving audio and persistent personal bests for each circuit and difficulty.
 
 Run `npm start`, then open http://127.0.0.1:4183. Run `npm test` for gameplay checks. No installation or build step is required. Three.js is vendored under dist/vendor.
 
@@ -31,4 +31,22 @@ Select a track before starting, or use Choose another track from the pause scree
 
 These are fictional city-inspired race circuits, not real Robotaxi service routes. Each uses a separate road shape and obstacle/ramp layout. Scoring and landing-thrust rules are shared.
 
-Personal best score and time are saved separately for each track. Existing single-track records and results migrate to Canyon. Saved results, X posts, and downloaded cards identify the completed circuit; driver identity is shared across tracks. All storage remains local to the browser.
+Personal best score and time are saved separately for each track and difficulty. Existing single-track records and results migrate to Canyon. Saved results, X posts, and downloaded cards identify the completed circuit; driver identity is shared across tracks. All storage remains local to the browser.
+
+## Difficulty
+
+Choose Easy, Medium, or Hard before racing. The chosen mode is remembered locally and can be linked with `?difficulty=hard` (also works with `track`). Easy retains the original game.
+
+| Mode | Obstacles | Top speed | Launch recharge | Landing cue starts | Checkpoints |
+| --- | --- | --- | --- | --- | --- |
+| Easy | 18 | 263 km/h | 2.1 s | 62% of flight | 400 m |
+| Medium | 24 | 288 km/h | 2.8 s | 72% of flight | 600 m |
+| Hard | 30 | 313 km/h | 3.6 s | 80% of flight | 800 m |
+
+All modes keep five ramps and the same scoring. Added hazards avoid ramp approaches/landing zones. Higher modes require later, more precise landing burns. Old records and saved results belong to Easy; X posts and cards identify the mode.
+
+## Road-trip radio
+
+Open RADIO or Tune the road-trip radio, choose Rock, Country, Rap, or Love songs, then Play. The volume slider is independent of driving sounds (M). Station, volume, and on/off preference are saved locally; first visit starts off. After a reload, Start or Play can resume an enabled station. Opening the mixer during a race pauses the run; resume when ready. Hidden tabs unload their live stream, and returning resumes only an enabled radio.
+
+Live music is delivered by 181.FM: Rock40, Highway181, The Beat, and The Heart. Official stream URLs are documented at https://www.181.fm/links and in `dist/radio.js`. Music is streamed directly, requires an internet connection, and is not bundled in this repository. Playlists and advertisements are controlled by the station. Connection errors offer an explicit retry or station switch, with an Open station link.

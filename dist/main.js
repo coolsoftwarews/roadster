@@ -1,17 +1,31 @@
 import * as THREE from './vendor/three.module.min.js';
-import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=tracks-1';
+import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=radio-1';
 import {DrivingAudio} from './audio.js?v=flight-3';
-import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=tracks-1';
-import {renderResultCard} from './result-card.js?v=tracks-1';
+import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=radio-1';
+import {renderResultCard} from './result-card.js?v=radio-1';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
 import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster} from './visual-effects.js?v=flight-3';
 
-import {TRACKS,getTrack} from './tracks.js?v=tracks-1';
-import {installTrackScenery} from './track-scenery.js?v=tracks-1';
+import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=radio-1';
+import {setupRadio} from './radio-ui.js?v=radio-1';
+import {TRACKS,getTrack} from './tracks.js?v=radio-1';
+import {installTrackScenery} from './track-scenery.js?v=radio-1';
 const $=id=>document.getElementById(id);
 let rememberedTrack='canyon';try{rememberedTrack=localStorage.getItem('roadster-run-track')||'canyon';}catch{}
 const track=getTrack(new URLSearchParams(location.search).get('track')??rememberedTrack);
 try{localStorage.setItem('roadster-run-track',track.id);}catch{}
+let rememberedDifficulty='easy';try{rememberedDifficulty=localStorage.getItem('roadster-run-difficulty')||'easy';}catch{}
+const difficulty=getDifficulty(new URLSearchParams(location.search).get('difficulty')??rememberedDifficulty);
+try{localStorage.setItem('roadster-run-difficulty',difficulty.id);}catch{}
+for(const option of DIFFICULTIES){
+  const label=document.createElement('label');label.className='difficulty-option';
+  const control=document.createElement('input');control.type='radio';control.name='difficulty';control.value=option.id;control.checked=option.id===difficulty.id;
+  const caption=document.createElement('span');caption.textContent=option.name;
+  control.addEventListener('change',()=>{try{localStorage.setItem('roadster-run-difficulty',option.id);}catch{}const url=new URL(location.href);url.searchParams.set('difficulty',option.id);location.assign(url.href);});
+  label.append(control,caption);$('difficulty-options').appendChild(label);
+}
+$('difficulty-description').textContent=difficulty.description;
+$('hud-difficulty').textContent=difficulty.name.toUpperCase();
 document.title='Roadster Run — '+track.name;
 document.documentElement.style.setProperty('--accent',track.theme.accent);
 $('brand-track').textContent=track.name.toUpperCase()+' — '+track.number;
@@ -49,7 +63,7 @@ const sunBall=new THREE.Mesh(new THREE.SphereGeometry(24,24,12),new THREE.MeshBa
 
 const controls=track.controls;
 const curve=new THREE.CatmullRomCurve3(controls.map(p=>new THREE.Vector3(...p)),false,'centripetal');
-curve.arcLengthDivisions=2500;const length=curve.getLength();const run=new Run(length,track);
+curve.arcLengthDivisions=2500;const length=curve.getLength();const run=new Run(length,track,difficulty.id);
 const samples=Array.from({length:1601},(_,i)=>curve.getPointAt(i/1600));
 function frame(s){
   const u=clamp(s/length,0,.99999),p=curve.getPointAt(u),t=curve.getTangentAt(u);const yaw=Math.atan2(t.x,t.z),right=new THREE.Vector3(t.z,0,-t.x).normalize();
@@ -206,13 +220,13 @@ const driverField=$('driver-name');driverField.value=loadDriver();
 let runDriver=displayDriver(driverField.value),lastResult=loadResult();
 function updateDriver(){const value=normalizeDriver(driverField.value);if(driverField.value!==value)driverField.value=value;$('driver-count').textContent=value.length+' / 255';const saved=saveDriver(value);$('driver-save-status').textContent=saved?'Saved in this browser · shown on your results and card':'Used for this race · browser storage is unavailable';}
 driverField.addEventListener('input',updateDriver);driverField.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('start').click();}});updateDriver();$('last-result').classList.toggle('hidden',!lastResult);
-function readBest(trackId=track.id){return loadBest(trackId);}
+function readBest(trackId=track.id,difficultyId=difficulty.id){return loadBest(trackId,difficultyId);}
 function showResults(result,isBest=false){
   clearInput();$('touch-controls').classList.add('hidden');$('intro').classList.add('hidden');$('intro-footer').classList.add('hidden');$('finish').classList.remove('hidden');
   $('again').firstChild.textContent='DRIVE '+track.city.toUpperCase()+' AGAIN ';
   $('result-driver').textContent=result.driver;$('final-score').textContent=String(result.score).padStart(4,'0');$('final-time').textContent=formatTime(result.time);$('final-clears').textContent=result.cleared+' / '+result.total;
-  $('finish-track').textContent=getTrack(result.trackId).name.toUpperCase()+' COMPLETE';
-  const best=readBest(result.trackId);$('best-time').textContent=formatTime(Number.isFinite(best.time)?best.time:result.time);$('new-best').classList.toggle('hidden',!isBest);
+  $('finish-track').textContent=getTrack(result.trackId).name.toUpperCase()+' · '+getDifficulty(result.difficultyId).name.toUpperCase()+' COMPLETE';
+  const best=readBest(result.trackId,result.difficultyId);$('best-time').textContent=formatTime(Number.isFinite(best.time)?best.time:result.time);$('new-best').classList.toggle('hidden',!isBest);
   $('finish-copy').textContent=result.successfulJumps+' safe landings · '+result.ramps+' / '+result.totalRamps+' ramps completed.';
   $('post-x').href=buildXIntent(result);$('share-help').textContent='Save the card, then attach it to your X post. Your post opens for review.';
   try{const canvas=$('result-card');renderResultCard(canvas,result);canvas.setAttribute('aria-label','Results for '+result.driver+': '+result.score+' points in '+formatTime(result.time));$('save-card').href=canvas.toDataURL('image/png');$('save-card').download='roadster-'+result.score+'-'+Math.round(result.time)+'s.png';$('save-card').classList.remove('hidden');canvas.parentElement.classList.remove('hidden');}
@@ -226,9 +240,10 @@ function changeDriver(){
 }
 $('last-result').addEventListener('click',()=>{if(lastResult)showResults(lastResult);});$('change-driver').addEventListener('click',changeDriver);$('change-track').addEventListener('click',changeDriver);
 
+const {radio,close:closeRadio}=setupRadio({onOpen:()=>{clearInput();if(run.state==='running')pauseToggle();}});
 function clearInput(){for(const k in input)input[k]=false;document.querySelectorAll('.touch-controls .active').forEach(b=>b.classList.remove('active'));}
-async function startRun(){runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;message('YOUR ROAD. YOUR PACE.','W to drive. Space to jump; press again on descent to land.');}
-function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();}}
+async function startRun(){runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;message('YOUR ROAD. YOUR PACE.','W to drive. Space to jump; press again on descent to land.');}
+function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();radio.resume();closeRadio();}}
 function thrust(){
   if(run.jump())return;
   if(run.state!=='running')return;
@@ -238,11 +253,11 @@ function thrust(){
 }
 function retryCheckpoint(){if(run.state==='crashed')run.recover();}
 
-function mute(){const muted=audio.toggle();$('sound').classList.toggle('muted',muted);$('sound').setAttribute('aria-label',muted?'Unmute sound':'Mute sound');$('sound').setAttribute('aria-pressed',String(muted));}
+function mute(){const muted=audio.toggle();$('sound').classList.toggle('muted',muted);$('sound').setAttribute('aria-label',muted?'Unmute driving sounds':'Mute driving sounds');$('sound').setAttribute('aria-pressed',String(muted));}
 function finish(){
   const previous=readBest(),isBest=run.time<previous.time||run.score>previous.score;
-  saveBest(track.id,{time:Math.min(run.time,previous.time),score:Math.max(run.score,previous.score)});
-  const result={trackId:track.id,driver:runDriver,score:run.score,time:run.time,cleared:run.cleared,total:run.obstacles.length,ramps:run.ramps.filter(r=>r.cleared).length,totalRamps:run.ramps.length,successfulJumps:run.successfulJumps};
+  saveBest(track.id,{time:Math.min(run.time,previous.time),score:Math.max(run.score,previous.score)},difficulty.id);
+  const result={trackId:track.id,difficultyId:difficulty.id,driver:runDriver,score:run.score,time:run.time,cleared:run.cleared,total:run.obstacles.length,ramps:run.ramps.filter(r=>r.cleared).length,totalRamps:run.ramps.length,successfulJumps:run.successfulJumps};
   lastResult=result;const saved=saveResult(result);$('last-result').classList.remove('hidden');showResults(result,isBest);
   if(!saved)$('share-help').textContent='Save your card before closing this tab; this browser could not remember the result. Attach the card to your X post.';
   audio.reward();
@@ -251,7 +266,9 @@ $('retry').addEventListener('click',retryCheckpoint);$('crash-restart').addEvent
 $('start').addEventListener('click',startRun);$('again').addEventListener('click',startRun);$('restart').addEventListener('click',startRun);$('pause').addEventListener('click',pauseToggle);$('resume').addEventListener('click',pauseToggle);$('sound').addEventListener('click',mute);$('touch-thrust').addEventListener('pointerdown',e=>{e.preventDefault();thrust();});
 const keyMap={KeyW:'gas',ArrowUp:'gas',KeyS:'brake',ArrowDown:'brake',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
 window.addEventListener('keydown',e=>{
-  if(e.target instanceof Element&&e.target.closest('input,textarea,[contenteditable="true"]'))return;
+  if(e.target instanceof Element&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+  if(!$('radio-panel').classList.contains('hidden')&&e.code==='Escape'){e.preventDefault();closeRadio();return;}
+  if(e.target instanceof Element&&e.target.closest('#radio-panel'))return;
   const driving=run.state==='running';
   if(keyMap[e.code]&&driving){e.preventDefault();input[keyMap[e.code]]=true;}
   if(e.code==='Space'&&!driving)return;
@@ -309,7 +326,7 @@ function animate(now){
   if(renderFrames++%3===0){
     $('score').textContent=String(run.score).padStart(4,'0');$('timer').textContent=formatTime(run.time);$('speed').textContent=Math.round(run.speed*3.6);$('cleared').textContent=run.cleared;
     const pct=clamp(run.s/length*100,0,100);$('progress-bar').style.width=pct+'%';$('progress-label').textContent=Math.floor(pct)+'%';$('charge-bar').style.width=run.charge*100+'%';
-    $('thrust-label').textContent=run.jumpTime>=0?(run.landingArmed?'LANDING SAFE':run.landingWindow?'FIRE NOW':'RESERVE READY'):run.charge>=.999?'READY':`${Math.ceil((1-run.charge)*RECHARGE_TIME*10)/10}s`;
+    $('thrust-label').textContent=run.jumpTime>=0?(run.landingArmed?'LANDING SAFE':run.landingWindow?'FIRE NOW':'RESERVE READY'):run.charge>=.999?'READY':`${Math.ceil((1-run.charge)*run.difficulty.rechargeTime*10)/10}s`;
     $('grip-label').textContent=run.jumpTime>=0?'FLIGHT CONTROL':Math.abs(run.offset)>9?'LOOSE SURFACE':corner>.55?'MAX GRIP ACTIVE':'AERO GRIP';$('grip-dot').style.background=run.jumpTime>=0?'#9bdcf0':Math.abs(run.offset)>9?'#ff9d70':'#93e5c7';
     $('thrust-hint').textContent=run.jumpTime>=0?'PRESS AGAIN TO LAND':'JUMP / LANDING THRUST';
     const next=run.nextObstacle(),nextRamp=run.nextRamp();
