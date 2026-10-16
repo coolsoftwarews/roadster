@@ -7,7 +7,7 @@
   <meta name="description" content="Carve the canyon. Jump the impossible. A 3D Roadster driving game with cold-gas thrusters, airborne rolls and reactive sound.">
   <title>Roadster Run — Canyon Circuit</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=flight-3">
+  <link rel="stylesheet" href="style.css?v=hud-4">
 </head>
 <body>
   <div id="world" aria-label="Three dimensional canyon racing track"></div>
@@ -30,11 +30,10 @@
     <section id="hud" class="hud hidden" aria-label="Game dashboard">
       <div class="run-stats"><div><small>SCORE</small><strong id="score">0000</strong></div><div><small>RUN TIME</small><strong id="timer">00:00.0</strong></div><div class="clears"><small>CLEARED</small><strong><span id="cleared">0</span><span class="muted"> / <span id="total">18</span></span></strong></div></div>
       <div class="course-progress"><div><span>START</span><span id="progress-label">0%</span><span>FINISH</span></div><div class="progress-track"><i id="progress-bar"></i></div></div>
-      <div id="flight-panel" class="flight-panel hidden" role="status" aria-live="polite"><div class="flight-top"><span id="flight-kind">FLIGHT CONTROL</span><span><b id="altitude">0.0</b> M</span></div><strong id="flight-title">CLIMBING</strong><span id="flight-instruction">Wait for descent, then press Space again.</span><div class="flight-meter"><i id="flight-meter-fill"></i></div></div>
       <div id="notice" class="notice" role="status" aria-live="polite"></div>
       <div class="next-obstacle"><span class="small-label">UP AHEAD</span><strong id="next-type">CLEAR ROAD</strong><span id="next-distance"></span></div>
       <div class="telemetry"><div class="speed"><strong id="speed">0</strong><span>KM/H</span></div><div class="grip"><span id="grip-dot"></span><span id="grip-label">AERO GRIP</span></div></div>
-      <div class="thruster"><div class="thruster-title"><span>↑ THRUSTERS</span><strong id="thrust-label">READY</strong></div><div class="charge-track"><i id="charge-bar"></i></div><div class="thrust-hint"><kbd>SPACE</kbd><span id="thrust-hint">JUMP / LANDING THRUST</span></div></div>
+      <div class="thruster"><div id="flight-panel" class="flight-panel hidden" role="status" aria-live="polite"><div class="flight-top"><span id="flight-kind">FLIGHT CONTROL</span><span><b id="altitude">0.0</b> M</span></div><strong id="flight-title">CLIMBING</strong><span id="flight-instruction">Wait for descent</span><div class="flight-meter"><i id="flight-meter-fill"></i></div></div><div class="thruster-title"><span>↑ THRUSTERS</span><strong id="thrust-label">READY</strong></div><div class="charge-track"><i id="charge-bar"></i></div><div class="thrust-hint"><kbd>SPACE</kbd><span id="thrust-hint">JUMP / LANDING THRUST</span></div></div>
       <div class="keyboard-hint"><span><kbd>W</kbd> GAS</span><span><kbd>S</kbd> BRAKE</span><span><kbd>A</kbd> LEFT <kbd>D</kbd> RIGHT</span><span><kbd>R</kbd> RECOVER</span><span><kbd>ESC</kbd> PAUSE</span></div>
       <canvas id="minimap" width="240" height="200" aria-label="Track map and your position"></canvas>
     </section>
@@ -45,6 +44,6 @@
   </main>
   <div id="touch-controls" class="touch-controls hidden"><div class="steer-buttons"><button data-control="left" aria-label="Steer left">←</button><button data-control="right" aria-label="Steer right">→</button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake">BRAKE</button><button data-control="gas" aria-label="Accelerate">GAS</button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing">↑<small>THRUST</small></button></div></div>
   <footer id="intro-footer"><span>BUILT FOR THE ROAD. READY FOR THE AIR.</span><span>A PLAYABLE ROADSTER CONCEPT</span></footer>
-  <script type="module" src="main.js?v=flight-3"></script>
+  <script type="module" src="main.js?v=hud-4"></script>
 </body>
 </html>
