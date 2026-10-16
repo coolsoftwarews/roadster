@@ -1,4 +1,5 @@
-import { formatTime } from './game-logic.js?v=share-5';
+import { formatTime } from './game-logic.js?v=tracks-1';
+import { getTrack } from './tracks.js?v=tracks-1';
 
 const FONT = 'Arial, Helvetica, sans-serif';
 const INK = '#fff5e7';
@@ -64,14 +65,55 @@ function label(context, text, x, y, color = MUTED, size = 12) {
   context.fillText(text, x, y);
 }
 
-function trackArt(context) {
+function cityArt(context, trackId) {
+  const building=(x,y,width,height,color)=>{
+    context.fillStyle=color;context.fillRect(x,y,width,height);
+    context.fillStyle='#d2eced55';
+    for(let wx=x+7;wx<x+width-4;wx+=12)for(let wy=y+10;wy<y+height-4;wy+=16)context.fillRect(wx,wy,4,5);
+  };
+  if(trackId==='austin'){
+    // Limestone hills, the downtown skyline, and the Capitol dome.
+    context.fillStyle='#3c6051';context.beginPath();context.moveTo(776,259);
+    context.bezierCurveTo(859,160,888,213,950,191);context.bezierCurveTo(1062,137,1112,244,1174,185);
+    context.lineTo(1174,382);context.lineTo(776,382);context.fill();
+    building(812,143,35,104,'#49676b');building(855,115,25,127,'#506e72');
+    building(886,158,39,91,'#3e5961');building(1118,161,29,97,'#566e68');
+    context.fillStyle='#caac89';context.fillRect(1094,186,54,26);context.fillRect(1113,165,16,24);
+    context.beginPath();context.arc(1121,165,12,Math.PI,0);context.fill();
+  }else if(trackId==='miami'){
+    // Biscayne-blue water, pastel Art Deco blocks, and palms.
+    context.fillStyle='#286a79';context.fillRect(776,201,398,181);
+    context.strokeStyle='#7ed9d04d';context.lineWidth=2;
+    for(let y=218;y<380;y+=19){context.beginPath();context.moveTo(776,y);context.lineTo(1174,y-6);context.stroke();}
+    building(792,158,42,92,'#a07c88');building(841,134,42,115,'#67a8aa');building(889,170,35,78,'#c5aa86');
+    context.fillStyle='#dfb5a0';context.fillRect(849,125,26,10);
+    for(const [x,y] of [[1134,223],[810,296]]){
+      context.strokeStyle='#aa9d7f';context.lineWidth=6;context.beginPath();context.moveTo(x,y+51);context.quadraticCurveTo(x-10,y+15,x,y);context.stroke();
+      context.strokeStyle='#6ba994';context.lineWidth=8;
+      for(const offset of [-28,-15,15,28]){context.beginPath();context.moveTo(x,y);context.quadraticCurveTo(x+offset/2,y-17,x+offset,y+(Math.abs(offset)===28?8:-5));context.stroke();}
+    }
+  }else{
+    // Fog-softened hills and a red suspension bridge across the bay.
+    context.fillStyle='#456372';context.fillRect(776,212,398,170);
+    context.fillStyle='#5d726d';context.beginPath();context.moveTo(776,232);context.lineTo(825,162);context.lineTo(880,205);context.lineTo(934,187);context.lineTo(998,236);context.closePath();context.fill();
+    building(1099,143,28,112,'#627c87');building(1134,171,24,84,'#849196');
+    context.strokeStyle='#d67860';context.lineWidth=5;
+    context.beginPath();context.moveTo(786,222);context.lineTo(1111,222);context.stroke();
+    for(const x of [842,1048]){context.fillStyle='#ce7159';context.fillRect(x,125,8,134);context.fillRect(x+21,125,8,134);context.fillRect(x,139,29,5);context.fillRect(x,164,29,5);}
+    context.lineWidth=2;context.beginPath();context.moveTo(783,210);context.lineTo(857,126);context.quadraticCurveTo(958,260,1063,126);context.lineTo(1114,198);context.stroke();
+    for(let x=880;x<1045;x+=18){const t=(x-857)/206;const y=126+268*t*(1-t);context.beginPath();context.moveTo(x,y);context.lineTo(x,222);context.stroke();}
+  }
+}
+
+function trackArt(context,track) {
   context.save();
   context.beginPath();
   context.rect(776, 26, 398, 355);
   context.clip();
   const glow = context.createRadialGradient(1040, 112, 0, 1040, 112, 245);
-  glow.addColorStop(0, '#ff91562e');
-  glow.addColorStop(1, '#ff915600');
+  const accent=track.theme.accent;
+  glow.addColorStop(0, accent+'2e');
+  glow.addColorStop(1, accent+'00');
   context.fillStyle = glow;
   context.fillRect(776, 26, 398, 355);
 
@@ -91,9 +133,11 @@ function trackArt(context) {
     context.closePath();
     context.fill();
   };
-  mesa(774, 278, 1.1, '#654434');
-  mesa(1084, 210, .85, '#8a5136');
-  mesa(940, 181, .4, '#513e36');
+  if(track.id==='canyon'){
+    mesa(774, 278, 1.1, '#654434');
+    mesa(1084, 210, .85, '#8a5136');
+    mesa(940, 181, .4, '#513e36');
+  }else cityArt(context,track.id);
 
   // Sweeping S bend, drawn as layered strokes for curbs and asphalt.
   const road = () => {
@@ -148,6 +192,7 @@ const count = value => Math.floor(safeNumber(value));
 
 /** Paint a complete, downloadable 1200 × 675 social result card synchronously. */
 export function renderResultCard(canvas, result) {
+  const track=getTrack(result.trackId);
   canvas.width = 1200;
   canvas.height = 675;
   const context = canvas.getContext('2d');
@@ -166,7 +211,7 @@ export function renderResultCard(canvas, result) {
   for (let y = 0; y < 675; y += 40) {
     context.beginPath(); context.moveTo(0, y); context.lineTo(1200, y); context.stroke();
   }
-  trackArt(context);
+  trackArt(context,track);
 
   context.fillStyle = ORANGE;
   context.fillRect(0, 0, 1200, 5);
@@ -176,7 +221,7 @@ export function renderResultCard(canvas, result) {
   context.fillStyle = ORANGE;
   context.fillText('/', 90, 38);
   label(context, 'ROADSTER RUN', 128, 43, INK, 24);
-  label(context, 'CANYON CIRCUIT  /  01', 130, 76, MUTED, 11);
+  label(context, `${track.name.toUpperCase()}  /  ${track.number}`, 130, 76, MUTED, 11);
   rounded(context, 60, 122, 169, 27, 3, '#ff865620');
   label(context, 'CIRCUIT COMPLETE', 72, 130, '#ffb78c', 11);
 

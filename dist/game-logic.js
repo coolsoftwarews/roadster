@@ -8,8 +8,8 @@ const GRAVITY = 8 * JUMP_HEIGHT / (JUMP_DURATION * JUMP_DURATION);
 const LAUNCH_VELOCITY = GRAVITY * JUMP_DURATION / 2;
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const lerp = (a,b,t) => a+(b-a)*t;
-export function makeObstacles(length) {
-  const layout = [
+export function makeObstacles(length, customLayout) {
+  const layout = customLayout ?? [
     [.065,'barrier',0], [.12,'car',-3], [.175,'pothole',2.6], [.225,'bus',0],
     [.28,'barrier',-1.5], [.335,'car',3], [.39,'pothole',-3], [.44,'bus',-2.7],
     [.49,'barrier',0], [.54,'car',-3.4], [.59,'pothole',2], [.64,'bus',2.4],
@@ -19,16 +19,16 @@ export function makeObstacles(length) {
   const sizes={barrier:[12,1.15,1.5],car:[2.8,1.65,5.6],bus:[3.25,3.35,11],pothole:[5.5,.15,7]};
   return layout.map(([f,type,offset],id)=>({id,s:f*length,type,offset,width:sizes[type][0],height:sizes[type][1],length:sizes[type][2],cleared:false,hit:false}));
 }
-export function makeRamps(length) {
+export function makeRamps(length, customLayout) {
   const positions=[.105,.315,.525,.735,.875], offsets=[0,-2,2,0,-2];
-  return positions.map((fraction,id)=>({id,s:fraction*length,length:22,width:7,height:3.2,offset:offsets[id],cleared:false}));
+  return (customLayout ?? positions.map((fraction,id)=>[fraction,offsets[id]])).map(([fraction,offset],id)=>({id,s:fraction*length,length:22,width:7,height:3.2,offset,cleared:false}));
 }
 export function rampSurfaceHeight(ramp,s) {
   const t=clamp((s-(ramp.s-ramp.length))/ramp.length,0,1);
   return ramp.height*t*t;
 }
 export class Run {
-  constructor(length) { this.length=length; this.obstacles=makeObstacles(length); this.ramps=makeRamps(length); this.reset(); }
+  constructor(length, track={}) { this.length=length; this.obstacles=makeObstacles(length,track.obstacles); this.ramps=makeRamps(length,track.ramps); this.reset(); }
   reset(){
     this.s=7;this.offset=0;this.speed=0;this.lateralVelocity=0;this.time=0;this.score=0;this.cleared=0;this.successfulJumps=0;
     this.height=0;this.jumpTime=-1;this.charge=1;this.checkpoint=7;this.state='ready';this.events=[];this.pending=new Set();this.recoverCooldown=0;this.offroadTime=0;this.roll=0;this.distance=0;

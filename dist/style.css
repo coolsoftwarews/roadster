@@ -18,3 +18,20 @@
 @media(max-height:700px) and (max-width:580px){.intro-content{width:auto;min-width:0;margin:100px 7% 75px}}
 
 .intro,.dialog{touch-action:pan-y}
+
+/* Four circuits, with a selection screen that scrolls on smaller displays. */
+.intro{display:flex;align-items:center;justify-content:space-between;gap:38px;padding:118px 6% 80px;overflow-y:auto}
+.intro-content{position:relative;left:auto;right:auto;top:auto;margin:0;width:43%;min-width:280px;flex-shrink:0}
+.intro-content h1{font-size:clamp(43px,5vw,76px);margin:20px 0}.intro-content p{margin-bottom:20px}
+.brief-card{position:relative;right:auto;bottom:auto;width:420px;max-width:49%;padding:22px;flex-shrink:0}
+.track-options{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}
+.track-option{position:relative;display:flex;flex-direction:column;text-decoration:none;min-height:128px;padding:13px 12px 12px;border:1px solid #ffffff24;border-radius:5px;background:#14202ba3;color:var(--cream);transition:border-color .15s,background .15s}
+.track-option svg{height:43px;width:100%;margin-bottom:7px;overflow:visible}.track-option polyline{fill:none;stroke:var(--track-color);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.track-option small{font-size:7px;letter-spacing:1.4px;color:#b5c7ce;margin-bottom:7px}.track-option strong{font-size:12px;line-height:1.2;font-weight:650}.track-option span{font-size:8px;color:#b8c3c5;margin-top:6px;line-height:1.4}
+.track-option:hover,.track-option.selected{border-color:var(--track-color);background:#24303b}.track-option.selected:after{content:'✓';position:absolute;right:10px;top:9px;color:var(--track-color);font-size:12px}.track-option:focus-visible{outline:2px solid white;outline-offset:3px}
+.selected-track h2{font-size:20px;letter-spacing:-.4px;margin:20px 0 6px}.selected-track p{font-size:10px;line-height:1.6;margin:0}.brief-stats{padding:16px 0}.brief-controls{margin-top:15px}.track-fiction{display:block;font-size:8px;line-height:1.5;color:#9eb0b7;margin-top:14px}.brief-card .brief-head{font-size:8px;letter-spacing:1px}
+@media(max-width:960px){.intro{padding-left:5%;padding-right:5%;gap:25px}.intro-content{width:44%}.intro-content h1{font-size:47px}.brief-card{padding:17px;max-width:49%}.track-option{padding:10px;min-height:123px}.track-option strong{font-size:11px}.brief-head b{letter-spacing:.5px}}
+@media(max-width:720px){.intro{display:block;padding:112px 7% 80px}.intro-content{width:100%;min-width:0;margin:0}.intro-content h1{font-size:46px}.intro-content .landing-rule{margin-bottom:12px}.brief-card{display:block;width:100%;max-width:100%;margin-top:27px;padding:20px}.track-option{min-height:128px}.track-option strong{font-size:13px}.intro-meta{font-size:7px}.intro-content p{font-size:12px}footer>span{display:none}footer{justify-content:flex-end;pointer-events:none}footer a{pointer-events:auto;padding:8px;background:#111d26c9;border-radius:3px}}
+@media(max-height:760px) and (min-width:721px){.intro{align-items:flex-start;padding-top:105px}.intro-content h1{font-size:42px;margin:15px 0}.intro-content p{font-size:11px;margin-bottom:14px}.brief-card{padding:17px}.track-option{min-height:114px;padding:9px}.track-option svg{height:32px}.selected-track h2{margin-top:14px}.brief-stats{padding:12px 0}.brief-stats strong{font-size:26px}.track-fiction{margin-top:10px}}
+
+@media(max-width:720px){body:not(.playing) .topbar{top:0;left:0;right:0;padding:17px 20px;background:linear-gradient(#14232bf5,#14232bd9 75%,transparent)}}
