@@ -15,3 +15,7 @@ Visuals and sound are generated in the browser. This is a stylized playable inte
 Five ramps launch automatically. After every jump, press Space again when THRUST NOW appears during descent to fire braking thrusters. The landing reserve is independent of launch recharge. An unprotected ground impact explodes the car; R or Retry checkpoint recovers with earned points intact. Safe ramp landings award 150 points once per ramp; cleared obstacles award 100. Keyboard and touch use the same thrust action.
 
 Graphics include procedural asphalt, sandstone strata, car reflections and wheel details, tire smoke/skid marks, thrust plumes, landing dust and pooled explosion effects. Audio is synthesized locally with separate motor, wind, road, tire and impact layers.
+
+## Driver identity and sharing
+
+Enter an optional driver name or URL (255 characters maximum) before racing. The identity and last completed result persist in this browser. Results show the full identity and a downloadable 1200×675 PNG share card, including roadster.coolsoftware.io at the bottom. Post to X opens a prefilled composer with score, time and the game URL; save the image card and attach it manually in X. Long names are shortened only in the prefilled post to fit, never on the saved card. This does not connect or change DNS for the printed custom domain.

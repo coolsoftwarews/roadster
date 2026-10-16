@@ -1,6 +1,8 @@
 import * as THREE from './vendor/three.module.min.js';
-import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=flight-3';
+import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=share-5';
 import {DrivingAudio} from './audio.js?v=flight-3';
+import {loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=share-5';
+import {renderResultCard} from './result-card.js?v=share-5';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
 import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster} from './visual-effects.js?v=flight-3';
 
@@ -170,8 +172,31 @@ const map=$('minimap'),mapctx=map.getContext('2d');const bounds={minX:Math.min(.
 const mapPoint=p=>[120+(p.x-(bounds.minX+bounds.maxX)/2)*scale,100-(p.z-(bounds.minZ+bounds.maxZ)/2)*scale];
 function drawMap(){mapctx.clearRect(0,0,240,200);mapctx.lineWidth=3;mapctx.lineCap='round';mapctx.strokeStyle='#ffffff60';mapctx.beginPath();samples.forEach((p,i)=>{const [x,y]=mapPoint(p);i?mapctx.lineTo(x,y):mapctx.moveTo(x,y);});mapctx.stroke();for(const ramp of run.ramps){const [rx,ry]=mapPoint(frame(ramp.s).p);mapctx.fillStyle=ramp.cleared?'#8bd9b2':'#ffc178';mapctx.beginPath();mapctx.moveTo(rx,ry-4);mapctx.lineTo(rx+3,ry+2);mapctx.lineTo(rx-3,ry+2);mapctx.closePath();mapctx.fill();}const [x,y]=mapPoint(frame(run.s).p);mapctx.fillStyle='#ff825b';mapctx.shadowColor='#ff825b';mapctx.shadowBlur=9;mapctx.beginPath();mapctx.arc(x,y,5,0,Math.PI*2);mapctx.fill();mapctx.shadowBlur=0;const [fx,fy]=mapPoint(samples.at(-1));mapctx.fillStyle='#f1e9d7';mapctx.fillRect(fx-3,fy-3,6,6);}
 function message(title,detail='',kind=''){const n=$('notice');n.className='notice visible '+kind;n.replaceChildren(document.createTextNode(title));if(detail){const s=document.createElement('small');s.textContent=detail;n.appendChild(s);}noticeUntil=elapsed+2.5;}
+
+const driverField=$('driver-name');driverField.value=loadDriver();
+let runDriver=displayDriver(driverField.value),lastResult=loadResult();
+function updateDriver(){const value=normalizeDriver(driverField.value);if(driverField.value!==value)driverField.value=value;$('driver-count').textContent=value.length+' / 255';const saved=saveDriver(value);$('driver-save-status').textContent=saved?'Saved in this browser · shown on your results and card':'Used for this race · browser storage is unavailable';}
+driverField.addEventListener('input',updateDriver);driverField.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('start').click();}});updateDriver();$('last-result').classList.toggle('hidden',!lastResult);
+function readBest(){try{const b=JSON.parse(localStorage.getItem('roadster-run-best')||'null');if(b&&Number.isFinite(b.time)&&Number.isFinite(b.score))return b;}catch{}return {time:Infinity,score:0};}
+function showResults(result,isBest=false){
+  clearInput();$('touch-controls').classList.add('hidden');$('intro').classList.add('hidden');$('intro-footer').classList.add('hidden');$('finish').classList.remove('hidden');
+  $('result-driver').textContent=result.driver;$('final-score').textContent=String(result.score).padStart(4,'0');$('final-time').textContent=formatTime(result.time);$('final-clears').textContent=result.cleared+' / '+result.total;
+  const best=readBest();$('best-time').textContent=formatTime(Number.isFinite(best.time)?best.time:result.time);$('new-best').classList.toggle('hidden',!isBest);
+  $('finish-copy').textContent=result.successfulJumps+' safe landings · '+result.ramps+' / '+result.totalRamps+' ramps completed.';
+  $('post-x').href=buildXIntent(result);$('share-help').textContent='Save the card, then attach it to your X post. Your post opens for review.';
+  try{const canvas=$('result-card');renderResultCard(canvas,result);canvas.setAttribute('aria-label','Results for '+result.driver+': '+result.score+' points in '+formatTime(result.time));$('save-card').href=canvas.toDataURL('image/png');$('save-card').download='roadster-'+result.score+'-'+Math.round(result.time)+'s.png';$('save-card').classList.remove('hidden');canvas.parentElement.classList.remove('hidden');}
+  catch(error){$('save-card').classList.add('hidden');$('result-card').parentElement.classList.add('hidden');$('share-help').textContent='The image could not be generated. You can still post your results to X.';console.error('Result card unavailable',error);}
+  $('finish').querySelector('.dialog').scrollTop=0;$('post-x').focus({preventScroll:true});
+}
+function changeDriver(){
+  clearInput();run.reset();fx.reset();car.visible=true;shadow.visible=true;cameraInitialized=false;crashDelay=-1;thrustGlow=0;
+  for(const id of ['finish','pause-panel','crash-panel','hud','touch-controls','flight-panel'])$(id).classList.add('hidden');
+  $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');document.body.classList.remove('playing','in-flight');driverField.focus();
+}
+$('last-result').addEventListener('click',()=>{if(lastResult)showResults(lastResult);});$('change-driver').addEventListener('click',changeDriver);
+
 function clearInput(){for(const k in input)input[k]=false;document.querySelectorAll('.touch-controls .active').forEach(b=>b.classList.remove('active'));}
-async function startRun(){audio.start().catch(()=>{});run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;message('YOUR ROAD. YOUR PACE.','W to drive. Space to jump; press again on descent to land.');}
+async function startRun(){runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;message('YOUR ROAD. YOUR PACE.','W to drive. Space to jump; press again on descent to land.');}
 function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();}}
 function thrust(){
   if(run.jump())return;
@@ -183,13 +208,18 @@ function thrust(){
 function retryCheckpoint(){if(run.state==='crashed')run.recover();}
 
 function mute(){const muted=audio.toggle();$('sound').classList.toggle('muted',muted);$('sound').setAttribute('aria-label',muted?'Unmute sound':'Mute sound');$('sound').setAttribute('aria-pressed',String(muted));}
-function finish(){clearInput();$('touch-controls').classList.add('hidden');$('finish').classList.remove('hidden');let best={time:Infinity,score:0};try{const saved=JSON.parse(localStorage.getItem('roadster-run-best')||'null');if(saved&&Number.isFinite(saved.time)&&Number.isFinite(saved.score))best=saved;}catch{}
-  const isBest=run.time<best.time||run.score>best.score;best={time:Math.min(run.time,best.time),score:Math.max(run.score,best.score)};try{localStorage.setItem('roadster-run-best',JSON.stringify(best));}catch{}
-  $('final-score').textContent=String(run.score).padStart(4,'0');$('final-time').textContent=formatTime(run.time);$('final-clears').textContent=`${run.cleared} / ${run.obstacles.length}`;$('best-time').textContent=formatTime(best.time);$('new-best').classList.toggle('hidden',!isBest);$('finish-copy').textContent=run.cleared===run.obstacles.length?'Every obstacle cleared. The canyon is yours.':`${run.successfulJumps} successful jump${run.successfulJumps===1?'':'s'}. Another run, another chance to fly.`;$('again').focus();audio.reward();}
+function finish(){
+  const previous=readBest(),isBest=run.time<previous.time||run.score>previous.score;
+  try{localStorage.setItem('roadster-run-best',JSON.stringify({time:Math.min(run.time,previous.time),score:Math.max(run.score,previous.score)}));}catch{}
+  const result={driver:runDriver,score:run.score,time:run.time,cleared:run.cleared,total:run.obstacles.length,ramps:run.ramps.filter(r=>r.cleared).length,totalRamps:run.ramps.length,successfulJumps:run.successfulJumps};
+  lastResult=result;const saved=saveResult(result);$('last-result').classList.remove('hidden');showResults(result,isBest);
+  if(!saved)$('share-help').textContent='Save your card before closing this tab; this browser could not remember the result. Attach the card to your X post.';
+  audio.reward();
+}
 $('retry').addEventListener('click',retryCheckpoint);$('crash-restart').addEventListener('click',startRun);
 $('start').addEventListener('click',startRun);$('again').addEventListener('click',startRun);$('restart').addEventListener('click',startRun);$('pause').addEventListener('click',pauseToggle);$('resume').addEventListener('click',pauseToggle);$('sound').addEventListener('click',mute);$('touch-thrust').addEventListener('pointerdown',e=>{e.preventDefault();thrust();});
 const keyMap={KeyW:'gas',ArrowUp:'gas',KeyS:'brake',ArrowDown:'brake',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
-window.addEventListener('keydown',e=>{if(keyMap[e.code]){e.preventDefault();if(run.state==='running')input[keyMap[e.code]]=true;}if(['Space','Escape','KeyP','KeyR'].includes(e.code))e.preventDefault();if(e.repeat)return;if(e.code==='Space')thrust();if(e.code==='Escape'||e.code==='KeyP')pauseToggle();if(e.code==='KeyR')run.recover();if(e.code==='KeyM')mute();});
+window.addEventListener('keydown',e=>{if(e.target instanceof Element&&e.target.closest('input,textarea,[contenteditable="true"]'))return;if(keyMap[e.code]){e.preventDefault();if(run.state==='running')input[keyMap[e.code]]=true;}if(['Space','Escape','KeyP','KeyR'].includes(e.code))e.preventDefault();if(e.repeat)return;if(e.code==='Space')thrust();if(e.code==='Escape'||e.code==='KeyP')pauseToggle();if(e.code==='KeyR')run.recover();if(e.code==='KeyM')mute();});
 window.addEventListener('keyup',e=>{if(keyMap[e.code])input[keyMap[e.code]]=false;});window.addEventListener('blur',()=>{clearInput();if(run.state==='running')pauseToggle();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&run.state==='running')pauseToggle();});
 document.querySelectorAll('[data-control]').forEach(b=>{const c=b.dataset.control;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);input[c]=true;b.classList.add('active');});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>{input[c]=false;b.classList.remove('active');});});
 window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();cameraInitialized=false;});

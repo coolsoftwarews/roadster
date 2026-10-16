@@ -1,0 +1,222 @@
+import { formatTime } from './game-logic.js?v=share-5';
+
+const FONT = 'Arial, Helvetica, sans-serif';
+const INK = '#fff5e7';
+const MUTED = '#b7c4ce';
+const ORANGE = '#ff8656';
+
+/** Wrap at grapheme boundaries, preserving long URLs and joined emoji in full. */
+export function wrapCardText(context, text, width) {
+  const segmenter = typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+  const lines = [];
+  for (const paragraph of String(text).split('\n')) {
+    const characters = segmenter
+      ? Array.from(segmenter.segment(paragraph), item => item.segment)
+      : Array.from(paragraph);
+    let line = '';
+    for (const character of characters) {
+      if (line && context.measureText(line + character).width > width) {
+        const space = line.lastIndexOf(' ');
+        if (space > line.length * .45) {
+          lines.push(line.slice(0, space + 1));
+          line = line.slice(space + 1);
+        } else {
+          lines.push(line);
+          line = '';
+        }
+      }
+      line += character;
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/** Find a legible size for every character; no clipping or ellipsis. */
+export function layoutCardDriver(context, driver, width = 1040, height = 126) {
+  let size = 36;
+  let lines;
+  do {
+    context.font = `600 ${size}px ${FONT}`;
+    lines = wrapCardText(context, driver, width);
+    if (lines.length * size * 1.25 <= height) break;
+    size -= 1;
+  } while (size > 8);
+  return { lines, size, lineHeight: size * 1.25 };
+}
+
+function rounded(context, x, y, width, height, radius, color) {
+  context.beginPath();
+  context.moveTo(x + radius, y);
+  context.arcTo(x + width, y, x + width, y + height, radius);
+  context.arcTo(x + width, y + height, x, y + height, radius);
+  context.arcTo(x, y + height, x, y, radius);
+  context.arcTo(x, y, x + width, y, radius);
+  context.closePath();
+  context.fillStyle = color;
+  context.fill();
+}
+
+function label(context, text, x, y, color = MUTED, size = 12) {
+  context.font = `700 ${size}px ${FONT}`;
+  context.fillStyle = color;
+  context.fillText(text, x, y);
+}
+
+function trackArt(context) {
+  context.save();
+  context.beginPath();
+  context.rect(776, 26, 398, 355);
+  context.clip();
+  const glow = context.createRadialGradient(1040, 112, 0, 1040, 112, 245);
+  glow.addColorStop(0, '#ff91562e');
+  glow.addColorStop(1, '#ff915600');
+  context.fillStyle = glow;
+  context.fillRect(776, 26, 398, 355);
+
+  context.fillStyle = '#ffad68';
+  context.beginPath();
+  context.arc(1042, 104, 36, 0, Math.PI * 2);
+  context.fill();
+  const mesa = (x, y, scale, color) => {
+    context.fillStyle = color;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x + 36 * scale, y - 85 * scale);
+    context.lineTo(x + 40 * scale, y - 121 * scale);
+    context.lineTo(x + 88 * scale, y - 121 * scale);
+    context.lineTo(x + 93 * scale, y - 84 * scale);
+    context.lineTo(x + 129 * scale, y);
+    context.closePath();
+    context.fill();
+  };
+  mesa(774, 278, 1.1, '#654434');
+  mesa(1084, 210, .85, '#8a5136');
+  mesa(940, 181, .4, '#513e36');
+
+  // Sweeping S bend, drawn as layered strokes for curbs and asphalt.
+  const road = () => {
+    context.beginPath();
+    context.moveTo(951, 403);
+    context.bezierCurveTo(747, 233, 1160, 300, 1065, 171);
+    context.bezierCurveTo(1028, 121, 965, 134, 989, 78);
+  };
+  context.lineCap = 'butt';
+  context.lineJoin = 'round';
+  road(); context.strokeStyle = '#030a1155'; context.lineWidth = 90; context.stroke();
+  road(); context.strokeStyle = '#d9c9ae'; context.lineWidth = 72; context.stroke();
+  context.setLineDash([15, 15]);
+  road(); context.strokeStyle = '#ee8152'; context.lineWidth = 72; context.stroke();
+  context.setLineDash([]);
+  road(); context.strokeStyle = '#27343e'; context.lineWidth = 63; context.stroke();
+  context.setLineDash([10, 13]);
+  road(); context.strokeStyle = '#f6e2bb88'; context.lineWidth = 2; context.stroke();
+  context.setLineDash([]);
+
+  // The Roadster from above, including thruster flare and a visible shadow.
+  context.translate(1006, 279);
+  context.rotate(.73);
+  rounded(context, -25, -41, 56, 98, 13, '#0008');
+  const flame = context.createLinearGradient(0, 33, 0, 97);
+  flame.addColorStop(0, '#e3fbff');
+  flame.addColorStop(.3, '#94e7ff');
+  flame.addColorStop(1, '#6abaff00');
+  for (const x of [-14, 14]) {
+    context.fillStyle = flame;
+    context.beginPath();
+    context.moveTo(x - 7, 33);
+    context.lineTo(x + 7, 33);
+    context.lineTo(x, 97);
+    context.fill();
+  }
+  rounded(context, -27, -30, 10, 22, 3, '#091016');
+  rounded(context, 17, -30, 10, 22, 3, '#091016');
+  rounded(context, -27, 16, 10, 24, 3, '#091016');
+  rounded(context, 17, 16, 10, 24, 3, '#091016');
+  rounded(context, -22, -45, 44, 89, 11, '#e2e8e4');
+  rounded(context, -18, -39, 36, 18, 5, '#fff7e8');
+  rounded(context, -16, -15, 32, 36, 7, '#162a39');
+  context.fillStyle = '#718f9d';
+  context.fillRect(-13, -12, 26, 7);
+  rounded(context, -17, 33, 34, 3, 1, ORANGE);
+  context.restore();
+}
+
+const safeNumber = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+const count = value => Math.floor(safeNumber(value));
+
+/** Paint a complete, downloadable 1200 × 675 social result card synchronously. */
+export function renderResultCard(canvas, result) {
+  canvas.width = 1200;
+  canvas.height = 675;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas drawing is unavailable.');
+  context.textBaseline = 'top';
+  const background = context.createLinearGradient(0, 0, 1200, 675);
+  background.addColorStop(0, '#192833');
+  background.addColorStop(1, '#09121c');
+  context.fillStyle = background;
+  context.fillRect(0, 0, 1200, 675);
+  context.strokeStyle = '#e3f0ff05';
+  context.lineWidth = 1;
+  for (let x = 0; x < 1200; x += 40) {
+    context.beginPath(); context.moveTo(x, 0); context.lineTo(x, 675); context.stroke();
+  }
+  for (let y = 0; y < 675; y += 40) {
+    context.beginPath(); context.moveTo(0, y); context.lineTo(1200, y); context.stroke();
+  }
+  trackArt(context);
+
+  context.fillStyle = ORANGE;
+  context.fillRect(0, 0, 1200, 5);
+  context.font = `italic 900 46px ${FONT}`;
+  context.fillStyle = INK;
+  context.fillText('R', 60, 38);
+  context.fillStyle = ORANGE;
+  context.fillText('/', 90, 38);
+  label(context, 'ROADSTER RUN', 128, 43, INK, 24);
+  label(context, 'CANYON CIRCUIT  /  01', 130, 76, MUTED, 11);
+  rounded(context, 60, 122, 169, 27, 3, '#ff865620');
+  label(context, 'CIRCUIT COMPLETE', 72, 130, '#ffb78c', 11);
+
+  label(context, 'TOTAL SCORE', 60, 178);
+  context.font = `800 85px ${FONT}`;
+  context.fillStyle = INK;
+  context.fillText(count(result.score).toLocaleString('en-US'), 55, 197, 330);
+  label(context, 'RUN TIME', 416, 178);
+  const time = formatTime(safeNumber(result.time));
+  context.font = `500 67px ${FONT}`;
+  context.fillText(time, 410, 207, 335);
+
+  const metrics = [
+    ['OBSTACLES', `${count(result.cleared)} / ${count(result.total)}`],
+    ['RAMPS', `${count(result.ramps)} / ${count(result.totalRamps)}`],
+    ['SAFE LANDINGS', String(count(result.successfulJumps))]
+  ];
+  metrics.forEach(([title, value], index) => {
+    const x = 60 + index * 238;
+    label(context, title, x, 305, MUTED, 10);
+    context.font = `500 29px ${FONT}`;
+    context.fillStyle = INK;
+    context.fillText(value, x, 325);
+  });
+
+  context.fillStyle = '#ffffff21';
+  context.fillRect(60, 383, 1080, 1);
+  rounded(context, 60, 405, 1080, 183, 8, '#ffffff05');
+  context.fillStyle = ORANGE;
+  context.fillRect(60, 420, 3, 26);
+  label(context, 'DRIVER', 80, 423, '#ffb78c', 11);
+  const driver = String(result.driver ?? '') || 'Anonymous driver';
+  const layout = layoutCardDriver(context, driver);
+  context.font = `600 ${layout.size}px ${FONT}`;
+  context.fillStyle = INK;
+  layout.lines.forEach((line, index) => context.fillText(line, 80, 452 + index * layout.lineHeight));
+
+  label(context, 'YOUR LINE. YOUR PACE. YOUR NEXT RECORD.', 60, 627, MUTED, 11);
+  context.textAlign = 'right';
+  label(context, 'roadster.coolsoftware.io', 1140, 619, INK, 21);
+  context.textAlign = 'left';
+  return canvas;
+}

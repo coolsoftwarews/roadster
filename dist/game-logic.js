@@ -169,7 +169,7 @@ export class Run {
   nextObstacle(){return this.obstacles.find(o=>o.s>this.s+3&&!o.cleared);}
   nextRamp(){return this.ramps.find(r=>r.s>this.s&&!r.cleared);}
 }
-export function formatTime(t){const mins=Math.floor(t/60),secs=(t%60).toFixed(1).padStart(4,'0');return `${String(mins).padStart(2,'0')}:${secs}`;}
+export function formatTime(t){const tenths=Math.round(Math.max(0,t)*10),mins=Math.floor(tenths/600),secs=((tenths%600)/10).toFixed(1).padStart(4,'0');return `${String(mins).padStart(2,'0')}:${secs}`;}
 
 
 
