@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.min.js';
 import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js';
 import {DrivingAudio} from './audio.js';
+import {chaseCameraPosition} from './driving-view.js';
 
 const $=id=>document.getElementById(id);
 let renderer;
@@ -169,7 +170,8 @@ function animate(now){
   for(let i=0;i<flames.length;i++){const active=run.jumpTime>=0;flames[i].visible=active||(preview&&i<2);if(flames[i].visible){flames[i].scale.setScalar((active?1:.2)*(1+Math.random()*.2));flames[i].material.opacity=active?.75:.4;}}
   shadow.position.copy(pointOn(visualS,preview?0:run.offset,.09));shadow.rotation.z=-f.yaw;shadow.material.opacity=1-run.height*.085;shadow.scale.setScalar(1+run.height*.03);
   const forward=new THREE.Vector3(f.t.x,0,f.t.z).normalize();const target=pos.clone().addScaledVector(forward,preview?17:9);target.y=pointOn(visualS+18,run.offset,1.5).y;
-  const back=preview?15:10+run.speed*.018;const desired=pos.clone().addScaledVector(forward,-back).addScaledVector(f.right,preview?3:run.lateralVelocity*.09);desired.y=f.p.y+(preview?12:7.5)+run.height*.36;
+  const desired=preview?pos.clone().addScaledVector(forward,-15).addScaledVector(f.right,3):chaseCameraPosition(f.p,forward,f.right,run.offset,run.height,run.speed);
+  if(preview)desired.y=f.p.y+12;
   if(preview)target.addScaledVector(f.right,5);
   if(!cameraInitialized){camera.position.copy(desired);cameraTarget.copy(target);cameraInitialized=true;}else{camera.position.lerp(desired,1-Math.exp(-dt*5));cameraTarget.lerp(target,1-Math.exp(-dt*6));}
   tempLook.copy(cameraTarget);if(shake>0){tempLook.x+=(Math.random()-.5)*shake;tempLook.y+=(Math.random()-.5)*shake;shake=Math.max(0,shake-dt*.8);}camera.lookAt(tempLook);

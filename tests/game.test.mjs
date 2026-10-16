@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Run,JUMP_DURATION,formatTime} from '../dist/game-logic.js';
+import * as THREE from '../dist/vendor/three.module.min.js';
+import {chaseCameraPosition} from '../dist/driving-view.js';
 const gas={gas:true};
 function advance(run,seconds,input={}){for(let t=0;t<seconds;t+=1/120)run.update(1/120,input);}
 test('coasting at the start has no deadline and does not move the car',()=>{const r=new Run(3000);r.start();advance(r,120);assert.equal(r.s,7);assert.equal(r.state,'running');assert.ok(r.time>=120);});
@@ -13,3 +15,28 @@ test('pause freezes time, motion and thruster recharge',()=>{const r=new Run(300
 test('leaving the road restores the latest checkpoint without erasing score',()=>{const r=new Run(3000);r.start();r.checkpoint=400;r.s=450;r.offset=20;r.score=100;advance(r,.1,gas);assert.ok(r.s>=400&&r.s<401);assert.equal(r.offset,0);assert.equal(r.score,100);});
 test('finishing produces one finish event and restart resets the run',()=>{const r=new Run(3000);r.start();r.s=2987;r.speed=60;advance(r,.2,gas);assert.equal(r.state,'finished');assert.equal(r.drainEvents().filter(e=>e.type==='finish').length,1);r.reset();assert.equal(r.score,0);assert.equal(r.time,0);assert.equal(r.state,'ready');assert.equal(r.cleared,0);});
 test('clock formatting handles minute transitions',()=>{assert.equal(formatTime(0),'00:00.0');assert.equal(formatTime(65.4),'01:05.4');});
+
+for (const direction of ['left', 'right']) {
+  test(direction + ' steering stays visibly ' + direction + ' around corners and in flight', () => {
+    for (const heading of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+      for (const airborne of [false, true]) {
+        const r = new Run(3000); r.start(); r.speed = 50;
+        if (airborne) r.jump();
+        advance(r, .55, {gas: true, [direction]: true});
+        const center = new THREE.Vector3(30, 10, 50);
+        const forward = new THREE.Vector3(Math.sin(heading), 0, Math.cos(heading));
+        const lateral = new THREE.Vector3(forward.z, 0, -forward.x);
+        const car = center.clone().addScaledVector(lateral, r.offset);
+        car.y += r.height + .04;
+        const target = car.clone().addScaledVector(forward, 9);
+        target.y = center.y + 1.5;
+        const camera = new THREE.PerspectiveCamera(58, 16 / 9, .2, 2200);
+        camera.position.copy(chaseCameraPosition(center, forward, lateral, r.offset, r.height, r.speed));
+        camera.lookAt(target); camera.updateMatrixWorld();
+        const screenX = car.clone().project(camera).x;
+        assert.ok(direction === 'left' ? screenX < -.01 : screenX > .01,
+          direction + ' must appear on the correct side of the screen, got ' + screenX);
+      }
+    }
+  });
+}

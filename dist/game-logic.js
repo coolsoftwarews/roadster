@@ -43,6 +43,7 @@ export class Run {
     const gas=input.gas?1:0, brake=input.brake?1:0;
     const accel=gas*(28-this.speed*.19)-brake*48-(this.speed>0?2.2+this.speed*.035:0)-(offroad&&!airborne?20:0);
     this.speed=clamp(this.speed+accel*dt,0,MAX_SPEED);
+    // Positive offset is driver-left in the track coordinate frame.
     const steer=(input.left?1:0)-(input.right?1:0);
     const targetLateral=steer*Math.min(12,this.speed*.36)*(airborne?.68:1);
     this.lateralVelocity=lerp(this.lateralVelocity,targetLateral,Math.min(1,dt*(airborne?3.1:6.5)));
