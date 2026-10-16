@@ -20,6 +20,10 @@ Graphics include procedural asphalt, sandstone strata, car reflections and wheel
 
 Enter an optional driver identity in the Driver field (255 characters maximum) before racing. The identity and last completed result persist in this browser. Results show the full identity and a downloadable 1200×675 PNG share card, including roadster.coolsoftware.io at the bottom. Post to X opens a prefilled composer with track name, score, time and the game URL; save the image card and attach it manually in X. Long names are shortened only in the prefilled post to fit, never on the saved card. This does not connect or change DNS for the printed custom domain.
 
+## Social link previews
+
+Open Graph and X large-image card tags are included directly in `dist/index.html`, so crawlers do not need JavaScript. They use the public URL https://roadster.coolsoftware.io/ and the bundled launch artwork at `/assets/roadster-launch.png`. Deploy the entire `dist` directory to the custom domain, including `assets` and `robots.txt`. The image URL must return a public `200 image/png` response, not an HTML fallback or sign-in page. Link previews use this shared artwork; personal result cards remain downloadable PNGs for manual attachment.
+
 ## Four circuits
 
 Select a track before starting, or use Choose another track from the pause screen. The last selected track is remembered in this browser. Direct links use `?track=canyon`, `?track=austin`, `?track=miami`, or `?track=bay-area`.
