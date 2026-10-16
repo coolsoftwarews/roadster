@@ -93,7 +93,7 @@
 .launch-home{display:grid;grid-template-columns:38% 57%;column-gap:5%;row-gap:28px;align-content:start}
 .launch-home .intro-content,.launch-home .launch-showcase{width:100%}
 .launch-home .launch-stage img{max-height:clamp(245px,34vh,400px)}
-.launch-home #intro-footer{position:static;grid-column:1 / -1;width:100%;margin:0;pointer-events:auto;gap:16px;line-height:1.5}
+.launch-home #intro-footer{position:static;grid-column:1 / -1;width:100%;margin:0;pointer-events:auto;gap:16px;line-height:1.5;align-items:center;flex-wrap:wrap}
 @media(min-width:1400px){.launch-home{grid-template-columns:37% 57%;column-gap:6%}}
 @media(min-width:721px) and (max-width:960px){.launch-home{grid-template-columns:40% 56%;column-gap:4%}}
 @media(max-width:720px){.launch-home{display:flex;gap:26px}.launch-home .launch-showcase{display:contents}.launch-home .launch-stage img{max-height:none}.launch-home #intro-footer{justify-content:flex-start;padding:0}.launch-home #intro-footer a{padding:0;background:none;font-size:9px}}
@@ -120,3 +120,6 @@ body:not(.playing) .topbar{top:0;left:0;right:0;padding:26px 40px 22px;backgroun
 .sound-saved kbd{font-size:8px;min-height:17px}
 @media(max-width:800px){.sound-panel{top:78px;right:22px;max-height:calc(100dvh - 94px)}}
 @media(max-width:580px){.sound-panel{top:70px;right:16px;max-height:calc(100dvh - 86px)}}
+
+/* Follow link replaces the home footer tagline. */
+.launch-home #intro-footer .follow-x{margin:0;padding:10px 12px;font-size:11px;letter-spacing:.2px}
