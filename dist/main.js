@@ -40,7 +40,7 @@ for(const option of TRACKS){
   link.style.setProperty('--track-color',option.theme.accent);
   const xs=option.controls.map(p=>p[0]),zs=option.controls.map(p=>p[2]);
   const minX=Math.min(...xs),minZ=Math.min(...zs),scale=Math.min(135/(Math.max(...xs)-minX),49/(Math.max(...zs)-minZ));
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 160 65');svg.setAttribute('aria-hidden','true');
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 '+(24+(Math.max(...xs)-minX)*scale)+' 65');svg.setAttribute('aria-hidden','true');
   const route=document.createElementNS(svg.namespaceURI,'polyline');route.setAttribute('points',option.controls.map(p=>(12+(p[0]-minX)*scale)+','+(57-(p[2]-minZ)*scale)).join(' '));svg.appendChild(route);link.appendChild(svg);
   const number=document.createElement('small');number.textContent=option.number+' / '+option.city.toUpperCase();link.appendChild(number);
   const name=document.createElement('strong');name.textContent=option.name;link.appendChild(name);
@@ -236,7 +236,7 @@ function showResults(result,isBest=false){
 function changeDriver(){
   clearInput();run.reset();fx.reset();car.visible=true;shadow.visible=true;cameraInitialized=false;crashDelay=-1;thrustGlow=0;
   for(const id of ['finish','pause-panel','crash-panel','hud','touch-controls','flight-panel'])$(id).classList.add('hidden');
-  $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');document.body.classList.remove('playing','in-flight');driverField.focus();
+  $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');document.body.classList.remove('playing','in-flight');$('intro').scrollTop=0;driverField.focus({preventScroll:true});
 }
 $('last-result').addEventListener('click',()=>{if(lastResult)showResults(lastResult);});$('change-driver').addEventListener('click',changeDriver);$('change-track').addEventListener('click',changeDriver);
 

@@ -8,7 +8,7 @@ Controls: WASD / arrows drive, Space thrusts and rolls, R recovers to a checkpoi
 
 The arcade aero grip follows the track heading while the player controls lateral position and speed, including during jumps. Clear obstacles and land for 100 points each, once per obstacle. The timer has no deadline. Recovery preserves elapsed time and cleared obstacles; restarting resets the run. Personal bests stay in this browser using localStorage.
 
-Visuals and sound are generated in the browser. This is a stylized playable interpretation of the concept artwork, not a vehicle simulation.
+Gameplay visuals and driving sounds are generated in the browser. This is a stylized playable interpretation of the concept artwork, not a vehicle simulation.
 
 ## Ramp flights and landing thrust
 
@@ -50,3 +50,7 @@ All modes keep five ramps and the same scoring. Added hazards avoid ramp approac
 Open RADIO or Tune the road-trip radio, choose Rock, Country, Rap, or Love songs, then Play. The volume slider is independent of driving sounds (M). Station, volume, and on/off preference are saved locally; first visit starts off. After a reload, Start or Play can resume an enabled station. Opening the mixer during a race pauses the run; resume when ready. Hidden tabs unload their live stream, and returning resumes only an enabled radio.
 
 Live music is delivered by 181.FM: Rock40, Highway181, The Beat, and The Heart. Official stream URLs are documented at https://www.181.fm/links and in `dist/radio.js`. Music is streamed directly, requires an internet connection, and is not bundled in this repository. Playlists and advertisements are controlled by the station. Connection errors offer an explicit retry or station switch, with an Open station link.
+
+## Launch home page
+
+The home screen pairs generated launch concept art with the circuit selector and a Follow me on X link to https://x.com/coolsoftware_ws. The static hero is bundled at dist/assets/roadster-launch.png; generation details are in docs/launch-art.md. It is hidden with the home screen when a run starts. Track, difficulty, driver, radio, and result controls retain their existing behavior.

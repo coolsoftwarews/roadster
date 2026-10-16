@@ -47,3 +47,57 @@
 @media(max-height:850px) and (min-width:721px){.intro{align-items:flex-start;padding-top:108px}.intro-content h1{font-size:42px;margin:15px 0}.intro-content>p{font-size:11px;margin-bottom:13px}.driver-field{margin-bottom:13px}.difficulty-picker{margin-bottom:13px}.difficulty-option span{padding:9px 4px}.intro-content .difficulty-picker p{font-size:8px;min-height:24px}.intro-content .landing-rule{font-size:10px;margin-top:11px}}
 
 @media(min-width:801px) and (max-width:1050px){.run-stats{top:95px;left:22px;right:auto}.course-progress{top:102px;left:auto;right:25px;transform:none;width:27%}.next-obstacle{top:186px}#minimap{top:175px}}
+
+/* Launch artwork has its own space; the car never sits behind the setup controls. */
+.launch-home{align-items:center;gap:5%;padding:108px 5% 70px;background:radial-gradient(ellipse at 73% 24%,#243342e8,transparent 65%),linear-gradient(110deg,#090f17fa,#101922f5)}
+.launch-home .intro-content{width:38%;min-width:280px}
+.launch-home .intro-content h1{font-size:clamp(40px,4.25vw,68px)}
+.launch-showcase{width:57%;max-width:940px;min-width:0;flex-shrink:0}
+.launch-stage{position:relative;margin:0;overflow:hidden;background:#080d14;border:1px solid #ffffff20;border-bottom:0;border-radius:8px 8px 0 0}
+.launch-stage img{display:block;width:100%;height:auto;max-height:34vh;object-fit:cover;object-position:center 46%}
+.launch-stage:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 70%,#0c151df0)}
+.launch-stage figcaption{position:absolute;z-index:1;bottom:15px;left:19px;right:19px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:8px;font-weight:700;letter-spacing:1.8px;text-shadow:0 1px 8px #000}
+.launch-stage figcaption>span{display:flex;align-items:center;gap:7px}
+.launch-stage figcaption i{width:5px;height:5px;border-radius:50%;background:#a1efff;box-shadow:0 0 10px #84ddff}
+.launch-stage figcaption small{font-size:6px;letter-spacing:1.3px;color:#bdc8d0}
+.launch-home .brief-card{width:100%;max-width:none;margin:0;padding:19px 20px;background:#14202ced;border-radius:0 0 8px 8px;border-top-color:#92dff232;backdrop-filter:none}
+.launch-home .track-options{gap:8px;margin-top:13px}
+.launch-home .track-option{display:grid;grid-template-columns:27px minmax(0,1fr);grid-template-rows:auto auto;column-gap:10px;row-gap:5px;align-content:center;min-height:76px;padding:11px 12px}
+.launch-home .track-option svg{grid-column:1;grid-row:1 / 3;width:27px;height:42px;margin:0}
+.launch-home .track-option small{grid-column:2;margin:0;padding-right:6px;font-size:6px;letter-spacing:.8px;line-height:1.4}
+.launch-home .track-option strong{grid-column:2;font-size:12px}
+.launch-home .track-option>span{display:none}
+.launch-home .track-option.selected:after{right:6px;top:5px;font-size:9px}
+.launch-home .selected-track h2{font-size:18px;margin:15px 0 5px}
+.launch-home .brief-stats{padding:12px 0}
+.launch-home .brief-stats strong{font-size:26px}
+.launch-home .brief-stats small{font-size:6px;margin-top:5px}
+.launch-home .brief-controls{margin-top:12px}
+.launch-home .brief-card>p{margin-top:10px;font-size:9px}
+.launch-home .track-fiction{font-size:7px;margin-top:10px}
+.follow-x{display:flex;align-items:center;gap:10px;width:fit-content;max-width:100%;margin-top:17px;padding:10px 12px;border:1px solid #ffffff26;border-radius:5px;background:#ffffff05;color:#f5f3ec;text-decoration:none;font-size:11px;line-height:1.4;transition:background .15s,border-color .15s}
+.follow-x svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
+.follow-x small{display:block;color:#b9c5ce;font-size:9px;letter-spacing:.2px}
+.follow-x b{font-size:17px;font-weight:400;margin-left:10px;color:var(--accent)}
+.follow-x:hover{background:#ffffff0d;border-color:#ffffff60}
+.follow-x:focus-visible{outline:2px solid #fff;outline-offset:4px}
+@media(min-width:1400px){.launch-home{gap:6%;padding-left:6%;padding-right:6%}.launch-home .intro-content{width:37%}.launch-showcase{width:57%}.launch-home .track-options{grid-template-columns:repeat(4,minmax(0,1fr))}.launch-home .track-option{display:flex;gap:5px;align-items:flex-start;min-height:115px}.launch-home .track-option svg{height:32px}.launch-home .track-option small{min-height:17px}.launch-home .track-option strong{font-size:11px}}
+@media(min-width:721px) and (max-height:850px){.launch-home{align-items:flex-start;padding-top:105px}.launch-home .intro-content h1{font-size:40px}.launch-stage img{max-height:28vh}.launch-home .track-option{min-height:68px}.launch-home .brief-card{padding:15px 17px}.launch-home .follow-x{margin-top:13px}}
+@media(min-width:721px) and (max-width:960px){.launch-home{gap:4%;padding-left:4%;padding-right:4%}.launch-home .intro-content{width:40%;min-width:0}.launch-showcase{width:56%}.launch-home .intro-content h1{font-size:37px;letter-spacing:-2px}.launch-home .track-option{grid-template-columns:20px minmax(0,1fr);column-gap:7px;padding:10px 8px}.launch-home .track-option svg{width:20px}.launch-home .track-option strong{font-size:10px}.launch-home .brief-head b{font-size:6px}.launch-stage figcaption small{display:none}.launch-home .brief-controls{font-size:8px}}
+@media(max-width:720px){.launch-home{display:flex;flex-direction:column;align-items:stretch;gap:26px;padding:100px 6% 85px;background:linear-gradient(155deg,#0b111afc,#16232af7);overflow-y:auto}.launch-home .intro-content{width:100%;min-width:0;flex-shrink:0}.launch-home .intro-content h1{font-size:clamp(39px,8.5vw,57px);margin:17px 0;letter-spacing:-2px}.launch-showcase{width:100%;max-width:none;flex-shrink:0}.launch-stage img{max-height:none;aspect-ratio:16 / 9;object-fit:cover}.launch-stage figcaption{left:14px;right:14px;bottom:12px;font-size:7px;letter-spacing:1px}.launch-stage figcaption small{font-size:5px;letter-spacing:.7px}.launch-home .brief-card{padding:18px}.launch-home .track-option{min-height:78px}.launch-home .track-option strong{font-size:11px}.launch-home .follow-x{margin-top:17px}.launch-home .driver-field,.launch-home .difficulty-picker{width:100%;max-width:420px}.launch-home .primary-button{width:100%;max-width:420px}.launch-home .intro-meta{margin-bottom:0}}
+@media(prefers-reduced-motion:reduce){.launch-home *{transition:none}}
+
+@media(max-width:720px){.launch-home .launch-showcase{display:contents}.launch-home .launch-stage{order:-1;flex-shrink:0;border-bottom:1px solid #ffffff20;border-radius:8px}.launch-home .brief-card{border-radius:8px;border-top-color:#ffffff30}}
+
+/* Keep the home footer in the scrolling layout, clear of setup controls. */
+.launch-home{display:grid;grid-template-columns:38% 57%;column-gap:5%;row-gap:28px;align-content:start}
+.launch-home .intro-content,.launch-home .launch-showcase{width:100%}
+.launch-home .launch-stage img{max-height:clamp(245px,34vh,400px)}
+.launch-home #intro-footer{position:static;grid-column:1 / -1;width:100%;margin:0;pointer-events:auto;gap:16px;line-height:1.5}
+@media(min-width:1400px){.launch-home{grid-template-columns:37% 57%;column-gap:6%}}
+@media(min-width:721px) and (max-width:960px){.launch-home{grid-template-columns:40% 56%;column-gap:4%}}
+@media(max-width:720px){.launch-home{display:flex;gap:26px}.launch-home .launch-showcase{display:contents}.launch-home .launch-stage img{max-height:none}.launch-home #intro-footer{justify-content:flex-start;padding:0}.launch-home #intro-footer a{padding:0;background:none;font-size:9px}}
+
+body:not(.playing) .topbar{top:0;left:0;right:0;padding:26px 40px 22px;background:linear-gradient(#0b121afb,#0b121ae8 72%,transparent)}
+@media(max-width:800px){body:not(.playing) .topbar{padding:20px 22px 22px}}
+@media(max-width:720px){body:not(.playing) .topbar{padding:17px 20px 20px}}
