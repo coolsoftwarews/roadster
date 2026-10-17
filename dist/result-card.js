@@ -1,5 +1,5 @@
 import { formatTime } from './game-logic.js?v=radio-1';
-import { getTrack } from './tracks.js?v=radio-1';
+import { getTrack } from './tracks.js?v=cinematic-1';
 import { getDifficulty } from './difficulty.js?v=radio-1';
 
 const FONT = 'Arial, Helvetica, sans-serif';
@@ -93,6 +93,29 @@ function cityArt(context, trackId) {
       context.strokeStyle='#6ba994';context.lineWidth=8;
       for(const offset of [-28,-15,15,28]){context.beginPath();context.moveTo(x,y);context.quadraticCurveTo(x+offset/2,y-17,x+offset,y+(Math.abs(offset)===28?8:-5));context.stroke();}
     }
+  }else if(trackId==='alpine'){
+    // Layered snow peaks and evergreen silhouettes echo the mountain circuit.
+    const peak=(x,y,width,height)=>{
+      context.fillStyle='#627d8e';context.beginPath();context.moveTo(x-width/2,y+height);context.lineTo(x,y);context.lineTo(x+width/2,y+height);context.closePath();context.fill();
+      context.fillStyle='#dcecf1';context.beginPath();context.moveTo(x,y);context.lineTo(x+width*.2,y+height*.4);context.lineTo(x+width*.065,y+height*.31);context.lineTo(x-width*.015,y+height*.42);context.lineTo(x-width*.09,y+height*.32);context.lineTo(x-width*.2,y+height*.4);context.closePath();context.fill();
+    };
+    peak(816,136,185,155);peak(909,84,220,226);peak(1112,116,224,194);
+    context.fillStyle='#9cafb6';context.beginPath();context.moveTo(776,301);context.quadraticCurveTo(893,246,1004,288);context.quadraticCurveTo(1113,276,1174,248);context.lineTo(1174,382);context.lineTo(776,382);context.closePath();context.fill();
+    for(const [x,y,size]of [[794,269,1],[820,286,.8],[850,257,.75],[1118,268,.9],[1141,255,1.15],[1166,296,.9]]){
+      context.fillStyle='#536e66';context.fillRect(x-2,y,4,45*size);
+      for(let tier=0;tier<3;tier++){const top=y-24*size+tier*12*size,width=(12+tier*4)*size;context.fillStyle='#315b52';context.beginPath();context.moveTo(x,top);context.lineTo(x-width,top+26*size);context.lineTo(x+width,top+26*size);context.closePath();context.fill();context.fillStyle='#dce8e8';context.beginPath();context.moveTo(x,top);context.lineTo(x-width*.58,top+15*size);context.lineTo(x+width*.58,top+15*size);context.closePath();context.fill();}
+    }
+  }else if(trackId==='tokyo'){
+    // Neon blocks and the illuminated observation tower keep Tokyo distinct.
+    context.fillStyle='#28354f';context.fillRect(776,238,398,144);
+    building(788,181,34,123,'#42506c');building(874,162,30,133,'#414b68');building(1100,139,30,159,'#56617c');building(1139,172,30,125,'#3c4b67');
+    for(const [x,y,w,h,color]of [[797,196,12,65,'#ee82ca'],[885,177,10,42,'#7bdeed'],[1108,154,13,63,'#d893d8'],[1147,185,12,52,'#83dce5']]){context.fillStyle=color;context.fillRect(x,y,w,h);context.fillStyle='#202e4b';for(let line=y+6;line<y+h-5;line+=10)context.fillRect(x+3,line,w-6,3);}
+    context.strokeStyle='#eea4c4';context.lineWidth=3;context.beginPath();context.moveTo(820,286);context.lineTo(848,112);context.lineTo(876,286);context.stroke();
+    context.strokeStyle='#86d8ed';context.lineWidth=2;
+    for(let y=148;y<276;y+=24){const width=(y-112)*.16;context.beginPath();context.moveTo(848-width,y);context.lineTo(848+width,y);context.lineTo(848-(y+24-112)*.16,y+24);context.stroke();}
+    context.fillStyle='#ee94bc';context.fillRect(830,206,36,5);context.fillStyle='#9cdef1';context.fillRect(833,211,30,8);context.fillStyle='#fff0d3';context.fillRect(847,99,2,17);
+    context.fillStyle='#65758c';context.fillRect(1078,277,96,6);for(const x of [1090,1128,1166])context.fillRect(x,283,4,54);
+    context.fillStyle='#c4d9df';context.fillRect(1094,266,67,10);context.fillStyle='#70cedc';for(let x=1098;x<1158;x+=11)context.fillRect(x,268,7,4);
   }else{
     // Fog-softened hills and a red suspension bridge across the bay.
     context.fillStyle='#456372';context.fillRect(776,212,398,170);
@@ -118,9 +141,9 @@ function trackArt(context,track) {
   context.fillStyle = glow;
   context.fillRect(776, 26, 398, 355);
 
-  context.fillStyle = '#ffad68';
+  context.fillStyle = track.id==='tokyo'?'#dce8ff':'#ffad68';
   context.beginPath();
-  context.arc(1042, 104, 36, 0, Math.PI * 2);
+  context.arc(1042, 104, track.id==='tokyo'?27:36, 0, Math.PI * 2);
   context.fill();
   const mesa = (x, y, scale, color) => {
     context.fillStyle = color;

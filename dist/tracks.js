@@ -37,6 +37,24 @@ export const TRACKS = [
     theme:{skyTop:'#7babbc',skyBottom:'#e3dfcf',fog:'#c9d6d3',groundHue:.21,groundSaturation:.21,groundLightness:.28,sunColor:'#ffe7bf',sunIntensity:2.65,hemisphereGround:'#8c9a80',accent:'#ff9b73'},
     obstacles:[[.035,'bus',0],[.075,'pothole',-3],[.115,'car',2],[.215,'barrier',0],[.25,'car',-3],[.285,'bus',2],[.395,'pothole',2],[.43,'barrier',0],[.465,'car',-2],[.575,'bus',-2],[.61,'pothole',3],[.645,'barrier',0],[.755,'car',3],[.79,'bus',-2],[.825,'pothole',2],[.935,'barrier',0],[.96,'car',-3],[.982,'bus',2]],
     ramps:[[.16,0],[.34,-2],[.52,2],[.70,0],[.88,-1.5]]
+  },
+  {
+    id:'alpine', name:'Alpine Pass', city:'Alpine mountains', number:'05',
+    tagline:'HIGH PASSES. CLEAR AIR.', description:'Climb snowy switchbacks past pine forests, timber chalets, and a stone viaduct.',
+    controls:[[0,18,0],[0,24,145],[85,39,265],[260,57,285],[450,74,240],[590,88,310],[620,101,450],[495,113,550],[305,119,545],[135,109,615],[95,93,755],[215,81,850],[405,83,835],[590,96,870],[690,112,1000],[610,126,1150],[425,131,1170],[260,116,1120],[125,99,1220],[180,81,1375],[360,69,1440],[555,62,1465],[690,58,1560]],
+    seed:48391,
+    theme:{skyTop:'#679fbf',skyBottom:'#e8edf1',fog:'#c3d5df',groundHue:.57,groundSaturation:.10,groundLightness:.64,sunColor:'#fff1db',sunIntensity:2.7,hemisphereGround:'#a9bdc6',accent:'#acd9ef',curbColor:'#628aa3',defaultWeather:'sunrise'},
+    obstacles:[[.035,'car',-3],[.075,'barrier',0],[.118,'pothole',2],[.215,'bus',-3],[.25,'car',3],[.285,'barrier',0],[.395,'car',-2],[.43,'pothole',3],[.465,'bus',0],[.575,'barrier',0],[.61,'car',-3],[.645,'pothole',2.5],[.755,'bus',2.5],[.79,'barrier',0],[.825,'car',-3],[.935,'pothole',1.5],[.96,'car',3],[.982,'barrier',0]],
+    ramps:[[.16,-1.5],[.34,2],[.52,0],[.70,-2],[.88,1.5]]
+  },
+  {
+    id:'tokyo', name:'Tokyo Night Run', city:'Tokyo, Japan', number:'06',
+    tagline:'NEON STREETS. CITY SPEED.', description:'Sweep through a fictional neon district beneath a steel tower and elevated city trains.',
+    controls:[[0,5,0],[0,6,180],[70,7,310],[245,8,330],[455,10,315],[595,14,390],[610,19,540],[495,22,645],[280,18,650],[100,12,720],[70,9,875],[205,10,970],[420,15,950],[620,20,975],[735,24,1105],[660,20,1260],[475,13,1325],[280,9,1310],[110,7,1390],[110,8,1545],[255,12,1655],[455,16,1650],[635,18,1585]],
+    seed:86719,
+    theme:{skyTop:'#648ba5',skyBottom:'#c2c8db',fog:'#8899b3',groundHue:.60,groundSaturation:.12,groundLightness:.24,sunColor:'#f5dcde',sunIntensity:2.6,hemisphereGround:'#4a5568',accent:'#e9a3e1',curbColor:'#bc668e',defaultWeather:'evening'},
+    obstacles:[[.035,'bus',-2],[.075,'barrier',0],[.118,'car',3],[.215,'car',-3],[.25,'pothole',2],[.285,'barrier',0],[.395,'bus',2],[.43,'car',-3],[.465,'pothole',1],[.575,'barrier',0],[.61,'bus',-2],[.645,'car',3],[.755,'pothole',-2],[.79,'barrier',0],[.825,'car',2],[.935,'bus',-2],[.96,'car',3],[.982,'barrier',0]],
+    ramps:[[.16,1.5],[.34,-2],[.52,0],[.70,2],[.88,-1.5]]
   }
 ];
 

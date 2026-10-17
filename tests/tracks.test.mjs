@@ -11,9 +11,9 @@ function geometry(track) {
   return {curve, length: curve.getLength()};
 }
 
-test('the original circuit and three distinct selectable tracks have usable road geometry', () => {
-  assert.equal(TRACKS.length, 4);
-  assert.equal(new Set(TRACKS.map(track => track.id)).size, 4);
+test('six distinct selectable tracks have usable road geometry', () => {
+  assert.equal(TRACKS.length, 6);
+  assert.equal(new Set(TRACKS.map(track => track.id)).size, 6);
   assert.equal(getTrack('missing'), TRACKS[0]);
   const signatures = new Set();
   for (const track of TRACKS) {
@@ -23,6 +23,7 @@ test('the original circuit and three distinct selectable tracks have usable road
     const points = Array.from({length: 401}, (_, index) => curve.getPointAt(index / 400));
     for (let index = 0; index < points.length; index++) {
       assert.ok(points[index].toArray().every(Number.isFinite), `${track.id}: finite road point`);
+      assert.ok(points[index].x > -800 && points[index].x < 1400 && points[index].z > -600 && points[index].z < 1900, `${track.id}: road stays on the terrain`);
       const tangent = curve.getTangentAt(index / 400);
       assert.ok(tangent.toArray().every(Number.isFinite), `${track.id}: finite road direction`);
       assert.ok(Math.hypot(tangent.x, tangent.z) > .9, `${track.id}: driveable road grade`);
@@ -39,7 +40,7 @@ test('the original circuit and three distinct selectable tracks have usable road
       }
     }
   }
-  assert.equal(signatures.size, 4, 'each track has a different physical route');
+  assert.equal(signatures.size, 6, 'each track has a different physical route');
 });
 
 for (const track of TRACKS) {

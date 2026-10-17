@@ -19,7 +19,6 @@ export function setupSoundControls({audio,onOpen=()=>{}}){
   function open(){onOpen();render();panel.classList.remove('hidden');toggle.setAttribute('aria-expanded','true');$('sound-enabled').focus();}
   function toggleMute(){audio.toggle();render();}
   toggle.addEventListener('click',()=>panel.classList.contains('hidden')?open():close());
-  $('intro-sound').addEventListener('click',open);
   $('sound-close').addEventListener('click',()=>{close();toggle.focus();});
   $('sound-enabled').addEventListener('click',toggleMute);
   for(const slider of sliders)slider.addEventListener('input',()=>{audio.setVolume(slider.dataset.soundChannel,Number(slider.value)/100);render();});
@@ -27,6 +26,6 @@ export function setupSoundControls({audio,onOpen=()=>{}}){
     if(event.code==='Escape'){event.preventDefault();event.stopPropagation();close();toggle.focus();}
     else if(event.code==='KeyM'){event.preventDefault();event.stopPropagation();if(!event.repeat)toggleMute();}
   });
-  document.addEventListener('pointerdown',event=>{if(!panel.classList.contains('hidden')&&!panel.contains(event.target)&&!toggle.contains(event.target)&&!$('intro-sound').contains(event.target))close();});
+  document.addEventListener('pointerdown',event=>{if(!panel.classList.contains('hidden')&&!panel.contains(event.target)&&!toggle.contains(event.target))close();});
   render();return {close,toggleMute};
 }

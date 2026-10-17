@@ -1,12 +1,14 @@
 # Roadster Run
 
-A self-contained 3D browser game: four selectable circuits, 18–30 obstacles per track, jump-and-roll thrusters, reactive driving audio and persistent personal bests for each circuit and difficulty.
+A self-contained 3D browser game: six selectable circuits, 18–30 obstacles per track, jump-and-roll thrusters, selectable weather, reactive driving audio and persistent personal bests for each circuit and difficulty.
 
 Run `npm start`, then open http://127.0.0.1:4183. Run `npm test` for gameplay checks. No installation or build step is required. Three.js is vendored under dist/vendor.
 
-Controls: WASD / arrows drive, Space thrusts and rolls, R recovers to a checkpoint, Esc pauses, M toggles sound effects. Touch controls appear on touch devices. Sound starts with the Start button. The speaker button opens individual effect volumes.
+Controls: WASD / arrows drive, Space thrusts and rolls, R recovers to a checkpoint, Esc pauses, M toggles sound effects, and C switches chase/cockpit cameras. Larger on-screen steering, thrust, brake and gas buttons are available on desktop and touch devices. Thrust sits beside steering on the left so the right thumb can stay on the gas. A centered control guide appears before a new race; Start Race begins the clock and enables sound. The ? button reopens the guide, and the speaker button opens individual effect volumes.
 
-The arcade aero grip follows the track heading while the player controls lateral position and speed, including during jumps. Clear obstacles and land for 100 points each, once per obstacle. The timer has no deadline. Recovery preserves elapsed time and cleared obstacles; restarting resets the run. Personal bests stay in this browser using localStorage.
+The camera button switches between the original chase view and a driver's-seat view with a procedural dashboard, steering wheel and instruments. The cockpit follows the car through turns and jumps; the selected view is remembered locally. Crashes pull back to show the explosion. The home screen always uses its cinematic camera.
+
+The arcade aero grip follows the track heading while the player controls lateral position and speed, including during jumps. Clearing an obstacle and landing safely earns 100 points once per obstacle; safe ramp landings earn 150 points once per ramp. The timer has no deadline. Recovery preserves elapsed time and cleared obstacles; restarting resets the run. Personal bests stay in this browser using localStorage. A visible side map shows the route, completed section, current position, ramps, finish and remaining distance; it replaces the separate progress bar.
 
 The detailed Roadster model is bundled locally; scenery, visual effects and driving sounds are generated in the browser. This remains an arcade driving game with city-inspired scenery.
 
@@ -16,7 +18,7 @@ The car uses **Tesla Roadster 2020 by metarex.4d**, licensed under CC BY 4.0. Cr
 
 Desktop loads a 7.48 MB model with the original painted body and main glass surfaces preserved. Touch devices, narrow screens and devices reporting 4 GB or less memory use a 5.47 MB version with conservative geometry reduction and smaller textures. Both retain full-precision normals. The previous procedural car remains available while loading or if the model cannot load. The asset recipes and validation reports are in `tools/model-optimization/`.
 
-Tracks include textured asphalt and terrain, detailed building facades, reflective windows, roof details, smoother trees, and animated coastal water. Existing course layouts, obstacles, steering, thrust timing and scoring are unchanged.
+Tracks include textured asphalt and terrain, detailed building facades, reflective windows, roof details, smoother trees, animated coastal water, guardrails, streetlights and roadside shrubs. Alpine adds snowy peaks, evergreen forests, chalet balconies and a stone viaduct. Tokyo adds neon signs, a lattice observation tower and an elevated railway with a commuter train. Shared geometry and instancing limit draw calls; windows, lamps and signs respond to the selected lighting. The original four course layouts, steering, thrust timing and scoring are unchanged.
 
 ## Ramp flights and landing thrust
 
@@ -32,14 +34,16 @@ Enter an optional driver identity in the Driver field (255 characters maximum) b
 
 Open Graph and X large-image card tags are included directly in `dist/index.html`, so crawlers do not need JavaScript. They use the public URL https://roadster.coolsoftware.io/ and the bundled launch artwork at `/assets/roadster-launch.png`. Deploy the entire `dist` directory to the custom domain, including `assets` and `robots.txt`. The image URL must return a public `200 image/png` response, not an HTML fallback or sign-in page. Link previews use this shared artwork; personal result cards remain downloadable PNGs for manual attachment.
 
-## Four circuits
+## Six circuits
 
-Select a track before starting, or use Choose another track from the pause screen. The last selected track is remembered in this browser. Direct links use `?track=canyon`, `?track=austin`, `?track=miami`, or `?track=bay-area`.
+Select a track before starting, or use Choose track / difficulty from the pause screen. The last selected track is remembered in this browser. Direct links use `?track=canyon`, `?track=austin`, `?track=miami`, `?track=bay-area`, `?track=alpine`, or `?track=tokyo`.
 
 - **Canyon Circuit:** the original sandstone course.
 - **Austin Hill Country:** green hills, city skyline, and changing elevation.
 - **Miami Coastal Run:** palms, turquoise water, pastel buildings, and coastal straights.
 - **Bay Area Skyline:** hill turns, waterfront towers, and a red suspension bridge.
+- **Alpine Pass:** 3.8 km of mountain switchbacks, snowy forests, chalets and a stone viaduct.
+- **Tokyo Night Run:** 4.1 km through a fictional neon city, past an observation tower and elevated trains.
 
 These are fictional city-inspired race circuits, not real Robotaxi service routes. Each uses a separate road shape and obstacle/ramp layout. Scoring and landing-thrust rules are shared.
 
@@ -57,18 +61,28 @@ Choose Easy, Medium, or Hard before racing. The chosen mode is remembered locall
 
 All modes keep five ramps and the same scoring. Added hazards avoid ramp approaches/landing zones. Thrust responds immediately when charged, with the same recharge and landing window on every mode; traffic, speed, and checkpoint spacing provide the difficulty. Old records and saved results belong to Easy; X posts and cards identify the mode.
 
+## Time and weather
+
+Before racing, choose **Auto, Daylight, Rainy, Evening, Sunrise, or Sundown**. The selection is remembered in this browser and can be linked with `?weather=rainy` (alongside track and difficulty). Manual choices apply immediately to the cinematic preview and carry into the race.
+
+Auto selects simulated conditions for each new drive, with an 18% chance of rain. Otherwise the original four circuits follow the browser's local hour: sunrise from 05:00–07:59, daylight from 08:00–15:59, sundown from 16:00–18:59 and evening at other times. Tokyo normally chooses evening and Alpine normally chooses sunrise, with the same rain chance. These are simulated conditions, not a live forecast; no location permission is requested.
+
+Atmosphere changes the sky, fog, sunlight, reflections, road finish, headlights and scenery lighting. Rain adds a fixed pool of animated streaks and a wet road appearance. Pausing the race freezes the rain. Weather does not change driving physics or obstacle layouts.
+
 ## Road-trip radio
 
-Open RADIO or Road-trip radio, choose Rock, Country, Rap, or Love songs, then Play. The volume slider is independent of driving sounds (M). Station, volume, and on/off preference are saved locally; first visit starts off. After a reload, Start or Play can resume an enabled station. Opening the mixer during a race pauses the run; resume when ready. Hidden tabs unload their live stream, and returning resumes only an enabled radio.
+Open RADIO in the top bar, choose Rock, Country, Rap, or Love songs, then Play. The volume slider is independent of driving sounds (M). Station, volume, and on/off preference are saved locally; first visit starts off. After a reload, Start Race or Play can resume an enabled station. Opening the mixer during a race pauses the run; resume when ready. Hidden tabs unload their live stream, and returning resumes only an enabled radio.
 
 Live music is delivered by 181.FM: Rock40, Highway181, The Beat, and The Heart. Official stream URLs are documented at https://www.181.fm/links and in `dist/radio.js`. Music is streamed directly, requires an internet connection, and is not bundled in this repository. Playlists and advertisements are controlled by the station. Connection errors offer an explicit retry or station switch, with an Open station link.
 
-## Launch home page
+## Cinematic home page
 
-The home screen pairs generated launch concept art with the circuit selector and a Follow me on X link to https://x.com/coolsoftware_ws. The static hero is bundled at dist/assets/roadster-launch.png; generation details are in docs/launch-art.md. It is hidden with the home screen when a run starts. Track, difficulty, driver, radio, and result controls retain their existing behavior.
+The home screen uses a live 3D cinematic view of the detailed Roadster in the selected circuit, with a slow orbit, subtle movement and visible thrusters. Pause Intro stops the camera orbit; reduced-motion preferences start it paused. This is rendered in the game scene rather than downloading a video. Track, difficulty, driver and weather selectors remain available beside the preview. Detailed driving instructions appear in the centered pre-race guide instead of the home page, and the Follow me on X link remains at the bottom left: https://x.com/coolsoftware_ws.
+
+The earlier generated launch art remains bundled at `dist/assets/roadster-launch.png` for social link previews; generation details are in `docs/launch-art.md`.
 
 ## Collisions and sound controls
 
 Contact with cars, buses, barriers, or potholes explodes the car, including hazards already cleared on an earlier attempt. The collision ends movement immediately, discards pending jump awards, and preserves earned score and elapsed time. Retry returns to a checkpoint. Jumping cleanly over an obstacle still awards points after a safe landing.
 
-Open the speaker button or Sound effects on the home page for Engine, Tires, Thrusters, and Impacts & alerts sliders. A volume of zero mutes that category; the main toggle or M mutes all effects without changing the chosen levels. Defaults are 55%, 75%, 85%, and 75%, with quieter road/wind layers. Settings are saved in this browser and apply to active sounds. Radio volume remains independent. Opening either mixer during a run pauses it.
+Open the speaker button in the top bar for Engine, Tires, Thrusters, and Impacts & alerts sliders. A volume of zero mutes that category; the main toggle or M mutes all effects without changing the chosen levels. Defaults are 55%, 75%, 85%, and 75%, with quieter road/wind layers. Settings are saved in this browser and apply to active sounds. Radio volume remains independent. Opening either mixer during a run pauses it.

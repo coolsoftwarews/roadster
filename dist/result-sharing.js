@@ -1,5 +1,5 @@
 import {formatTime} from './game-logic.js?v=radio-1';
-import {TRACKS,getTrack} from './tracks.js?v=radio-1';
+import {TRACKS,getTrack} from './tracks.js?v=cinematic-1';
 import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=radio-1';
 
 export const DRIVER_STORAGE_KEY='roadster-run-driver';

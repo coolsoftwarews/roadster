@@ -22,13 +22,12 @@ export function setupRadio({onOpen=()=>{}}={}){
   function close(){panel.classList.add('hidden');toggle.setAttribute('aria-expanded','false');}
   function open(){onOpen();panel.classList.remove('hidden');toggle.setAttribute('aria-expanded','true');$('radio-station').focus();}
   toggle.addEventListener('click',()=>panel.classList.contains('hidden')?open():close());
-  $('intro-radio').addEventListener('click',open);
   $('radio-close').addEventListener('click',()=>{close();toggle.focus();});
   $('radio-station').addEventListener('change',event=>radio.selectStation(event.target.value));
   $('radio-volume').addEventListener('input',event=>radio.setVolume(Number(event.target.value)/100));
   $('radio-play').addEventListener('click',()=>!radio.state.error&&['playing','connecting','buffering'].includes(radio.state.status)?radio.stop():radio.play());
   panel.addEventListener('keydown',event=>{if(event.code==='Escape'){event.preventDefault();event.stopPropagation();close();toggle.focus();}});
-  document.addEventListener('pointerdown',event=>{if(!panel.classList.contains('hidden')&&!panel.contains(event.target)&&!toggle.contains(event.target)&&!$('intro-radio').contains(event.target))close();});
+  document.addEventListener('pointerdown',event=>{if(!panel.classList.contains('hidden')&&!panel.contains(event.target)&&!toggle.contains(event.target))close();});
   document.addEventListener('visibilitychange',()=>document.hidden?radio.suspend():radio.resume());
   window.addEventListener('pagehide',event=>event.persisted?radio.suspend():radio.destroy());
   window.addEventListener('pageshow',event=>{if(event.persisted&&!document.hidden)radio.resume();});

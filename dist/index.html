@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#171b20">
-  <meta name="description" content="Four circuits. One Roadster. Jump the impossible. A 3D Roadster driving game with cold-gas thrusters, airborne rolls and reactive sound.">
-  <title>Roadster Run — Four Circuits</title>
+  <meta name="description" content="Six circuits. One Roadster. Jump the impossible. A 3D Roadster driving game with cold-gas thrusters, airborne rolls and reactive sound.">
+  <title>Roadster Run — Six Circuits</title>
   <link rel="canonical" href="https://roadster.coolsoftware.io/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Roadster Run">
-  <meta property="og:title" content="Roadster Run — Four Circuits. One Roadster.">
-  <meta property="og:description" content="Race four circuits. Fire the thrusters, clear obstacles, and share your best run.">
+  <meta property="og:title" content="Roadster Run — Six Circuits. One Roadster.">
+  <meta property="og:description" content="Race six circuits. Fire the thrusters, clear obstacles, and share your best run.">
   <meta property="og:url" content="https://roadster.coolsoftware.io/">
   <meta property="og:image" content="https://roadster.coolsoftware.io/assets/roadster-launch.png">
   <meta property="og:image:secure_url" content="https://roadster.coolsoftware.io/assets/roadster-launch.png">
@@ -21,12 +21,12 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@coolsoftware_ws">
   <meta name="twitter:creator" content="@coolsoftware_ws">
-  <meta name="twitter:title" content="Roadster Run — Four Circuits. One Roadster.">
-  <meta name="twitter:description" content="Race four circuits. Fire the thrusters, clear obstacles, and share your best run.">
+  <meta name="twitter:title" content="Roadster Run — Six Circuits. One Roadster.">
+  <meta name="twitter:description" content="Race six circuits. Fire the thrusters, clear obstacles, and share your best run.">
   <meta name="twitter:image" content="https://roadster.coolsoftware.io/assets/roadster-launch.png">
   <meta name="twitter:image:alt" content="A red Roadster hovering above a launch stage on glowing blue thrusters.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=realism-1">
+  <link rel="stylesheet" href="style.css?v=cinematic-1">
   <script defer src="https://analytics-ops1.coolsoftware.io/script.js" data-website-id="8581cf0e-5736-4eef-ac55-14426630d248"></script>
 </head>
 <body>
@@ -34,7 +34,7 @@
   <div class="vignette"></div><div id="impact-flash" aria-hidden="true"></div><div id="speed-lines" aria-hidden="true"></div>
   <header class="topbar">
     <div class="brand"><span class="brand-symbol">R<span>/</span></span><div>ROADSTER<span class="brand-run">RUN</span><small id="brand-track">CANYON CIRCUIT — 01</small></div></div>
-    <div class="top-actions"><button id="radio-toggle" class="radio-toggle" aria-controls="radio-panel" aria-expanded="false" title="Road-trip radio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></svg><span>RADIO</span></button><button id="sound" class="icon-button" aria-label="Open sound effects" aria-controls="sound-panel" aria-expanded="false" title="Sound effects · M to mute"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></svg></button><button id="pause" class="icon-button" aria-label="Pause game" title="Pause (Esc)"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button></div>
+    <div class="top-actions"><button id="radio-toggle" class="radio-toggle" aria-controls="radio-panel" aria-expanded="false" title="Road-trip radio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></svg><span>RADIO</span></button><button id="sound" class="icon-button" aria-label="Open sound effects" aria-controls="sound-panel" aria-expanded="false" title="Sound effects · M to mute"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4 3c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></svg></button><button id="help-controls" class="icon-button help-button" aria-label="Show driving controls" aria-controls="controls-panel" title="Driving controls">?</button><button id="camera-toggle" class="icon-button camera-toggle" aria-label="Switch to cockpit camera" aria-pressed="false" aria-keyshortcuts="C" title="Camera · C"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h5l2-3h4l2 3h5v13H3V7Z"/><circle cx="12" cy="13" r="4"/></svg><span id="camera-label">CHASE</span></button><button id="pause" class="icon-button" aria-label="Pause game" title="Pause (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button></div>
   </header>
   <section id="radio-panel" class="radio-panel hidden" aria-label="Road-trip radio">
     <div class="radio-heading"><div><small>YOUR ROAD-TRIP SOUNDTRACK</small><h2>Roadster Radio</h2></div><button id="radio-close" class="radio-close" aria-label="Close radio">×</button></div>
@@ -63,29 +63,30 @@
         <p>Carve the corners. Fire the thrusters.<br>Hit the ramps. Stick the landing.</p>
         <div class="driver-field"><label for="driver-name">DRIVER <span id="driver-count">0 / 255</span></label><input id="driver-name" type="text" maxlength="255" placeholder="Your name" autocomplete="nickname" autocapitalize="off" spellcheck="false" aria-describedby="driver-save-status"><small id="driver-save-status">Saved in this browser · shown on your results and card</small></div>
         <fieldset class="difficulty-picker"><legend>DIFFICULTY</legend><div id="difficulty-options" class="difficulty-options" aria-describedby="difficulty-description"></div><p id="difficulty-description"></p></fieldset>
+        <div class="weather-picker"><label for="weather-select">TIME & WEATHER</label><select id="weather-select" aria-describedby="weather-description"></select><small id="weather-description">Automatic conditions for your next drive.</small></div>
         <button id="start" class="primary-button">LET’S DRIVE <span>↗</span></button>
-        <div class="intro-audio-links"><button id="intro-radio" class="last-result-button">♫ Road-trip radio</button><button id="intro-sound" class="last-result-button">Sound effects</button></div>
-        <button id="last-result" class="last-result-button hidden">View your last result ↗</button>
-        <div class="intro-meta"><span>FOUR TRACKS</span><b>·</b><span>YOUR PACE</span><b>·</b><span>NO TIME LIMIT</span></div>
       </div>
       <div class="launch-showcase">
-        <figure class="launch-stage">
-          <img src="assets/roadster-launch.png" width="1672" height="941" alt="A red Roadster hovering above a launch stage, lit by blue thrusters and red spotlights." fetchpriority="high" decoding="async">
-          <figcaption><span><i aria-hidden="true"></i> READY FOR LIFTOFF</span><small>ROADSTER RUN · CONCEPT ART</small></figcaption>
-        </figure>
-        <div class="brief-card"><div class="brief-head"><span>CHOOSE YOUR CIRCUIT</span><b id="brief-track">01 / CANYON RUN</b></div><nav id="track-options" class="track-options" aria-label="Choose a racing track"></nav><div class="selected-track"><h2 id="track-title">Canyon Circuit</h2><p id="track-description"></p></div><div class="brief-stats"><div><strong id="track-distance">2.4</strong><small>KILOMETRES</small></div><div><strong id="obstacle-count">18</strong><small>OBSTACLES</small></div><div><strong>+100</strong><small>PER CLEAR</small></div></div><div class="brief-controls"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Drive</span><span><kbd>SPACE</kbd> Launch / land</span></div><p id="brief-rules">5 ramps. +150 per safe ramp landing. +100 per obstacle. Press Space to jump; press again on descent to soften your landing. Miss the landing thrust and you explode.</p><small class="track-fiction">City-inspired fantasy circuits · no real service routes</small><a class="model-credit" href="credits.html" target="_blank" rel="noopener">3D model by metarex.4d · Credits ↗</a></div>
+        <div class="cinematic-stage" role="region" aria-label="Live cinematic preview of your Roadster and selected circuit"><span class="cinematic-caption"><i aria-hidden="true"></i> YOUR NEXT ESCAPE</span><button id="cinematic-toggle" class="cinematic-toggle" aria-pressed="false">Pause intro <span aria-hidden="true">Ⅱ</span></button></div>
+        <div class="brief-card"><div class="brief-head"><span>CHOOSE YOUR CIRCUIT</span><b id="brief-track">01 / CANYON RUN</b></div><nav id="track-options" class="track-options" aria-label="Choose a racing track"></nav><div class="selected-track"><h2 id="track-title">Canyon Circuit</h2><p id="track-description"></p></div><div class="brief-stats"><div><strong id="track-distance">2.4</strong><small>KILOMETRES</small></div><div><strong id="obstacle-count">18</strong><small>OBSTACLES</small></div><div><strong>+100</strong><small>PER CLEAR</small></div></div><small class="track-fiction">City-inspired fantasy circuits · no real service routes</small><a class="model-credit" href="credits.html" target="_blank" rel="noopener">3D model by metarex.4d · Credits ↗</a></div>
       </div>
   <footer id="intro-footer"><a class="follow-x" href="https://x.com/coolsoftware_ws" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-5-7.6L5.2 22H2l7.5-8.7L.8 2h6.5l4.6 7L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"/></svg><span>Follow me on X<small>@coolsoftware_ws</small></span><b aria-hidden="true">↗</b></a><a href="https://roadster.coolsoftware.io" target="_blank" rel="noopener noreferrer">roadster.coolsoftware.io ↗</a></footer>
     </section>
     <section id="hud" class="hud hidden" aria-label="Game dashboard">
       <div class="run-stats"><span id="hud-difficulty" class="hud-difficulty">EASY</span><div><small>SCORE</small><strong id="score">0000</strong></div><div><small>RUN TIME</small><strong id="timer">00:00.0</strong></div><div class="clears"><small>CLEARED</small><strong><span id="cleared">0</span><span class="muted"> / <span id="total">18</span></span></strong></div></div>
-      <div class="course-progress"><div><span>START</span><span id="progress-label">0%</span><span>FINISH</span></div><div class="progress-track"><i id="progress-bar"></i></div></div>
       <div id="notice" class="notice" role="status" aria-live="polite"></div>
       <div class="next-obstacle"><span class="small-label">UP AHEAD</span><strong id="next-type">CLEAR ROAD</strong><span id="next-distance"></span></div>
+      <button id="recover-control" class="recover-control" aria-label="Recover to checkpoint" title="Recover · R"><span aria-hidden="true">↺</span><strong>RECOVER</strong><kbd>R</kbd></button>
       <div class="telemetry"><div class="speed"><strong id="speed">0</strong><span>KM/H</span></div><div class="grip"><span id="grip-dot"></span><span id="grip-label">AERO GRIP</span></div></div>
       <div class="thruster"><div id="flight-panel" class="flight-panel hidden" role="status" aria-live="polite"><div class="flight-top"><span id="flight-kind">FLIGHT CONTROL</span><span><b id="altitude">0.0</b> M</span></div><strong id="flight-title">CLIMBING</strong><span id="flight-instruction">Wait for descent</span><div class="flight-meter"><i id="flight-meter-fill"></i></div></div><div class="thruster-title"><span>↑ THRUSTERS</span><strong id="thrust-label">READY</strong></div><div class="charge-track"><i id="charge-bar"></i></div><div class="thrust-hint"><kbd>SPACE</kbd><span id="thrust-hint">JUMP / LANDING THRUST</span></div></div>
-      <div class="keyboard-hint"><span><kbd>W</kbd> GAS</span><span><kbd>S</kbd> BRAKE</span><span><kbd>A</kbd> LEFT <kbd>D</kbd> RIGHT</span><span><kbd>R</kbd> RECOVER</span><span><kbd>ESC</kbd> PAUSE</span></div>
-      <canvas id="minimap" width="240" height="200" aria-label="Track map and your position"></canvas>
+      <aside class="route-map" aria-label="Circuit map and progress"><div class="map-heading"><span>YOUR ROUTE</span><strong id="map-progress">0%</strong></div><canvas id="minimap" width="240" height="200" aria-label="Track map, your position, ramps and finish"></canvas><div class="map-detail"><span id="map-distance">0.0 / 0.0 km</span><span>FINISH <b aria-hidden="true">⚑</b></span></div><div class="map-legend"><span><i class="map-you"></i> YOU</span><span><i class="map-ramp"></i> RAMP</span><span><i class="map-start"></i> START</span></div></aside>
+    </section>
+    <section id="controls-panel" class="overlay center-panel controls-panel hidden" role="dialog" aria-modal="true" aria-labelledby="controls-title" aria-describedby="controls-summary">
+      <div class="dialog controls-dialog"><div class="eyebrow">BEFORE YOU DRIVE</div><h2 id="controls-title">READY FOR <br><em>LIFTOFF?</em></h2><p id="controls-summary">A quick look at your controls. The race starts when you’re ready.</p>
+        <div class="control-guide"><div class="guide-drive"><div class="guide-keys" aria-hidden="true"><kbd>W</kbd><div><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div></div><div><strong>DRIVE</strong><p>W / ↑ gas · S / ↓ brake<br>A / ← left · D / → right</p></div></div><div class="guide-thrust"><kbd>SPACE</kbd><div><strong>LAUNCH & LAND</strong><p>Press to launch. Press again when<br><b>THRUST NOW</b> appears on descent.</p></div></div></div>
+        <div class="mobile-guide"><div><span aria-hidden="true">← ↑ →</span><strong>LEFT THUMB</strong><small>Steering + thrust</small></div><div><span aria-hidden="true">▥ ▥</span><strong>RIGHT THUMB</strong><small>Brake + gas</small></div></div><p class="guide-tip">Keep the gas held while you tap thrust.<br><kbd>C</kbd> chase / cockpit camera · <kbd>R</kbd> recover · <kbd>Esc</kbd> pause.</p>
+        <button id="controls-start" class="primary-button">START RACE <span>↗</span></button><button id="controls-back" class="text-button">BACK</button>
+      </div>
     </section>
     <section id="pause-panel" class="overlay center-panel hidden"><div class="dialog"><div class="eyebrow">TAKE A BREATHER</div><h2>YOUR ROAD.<br><em>YOUR PACE.</em></h2><p>The clock is paused. Pick up where you left off.</p><button id="resume" class="primary-button">KEEP DRIVING <span>↗</span></button><button id="restart" class="text-button">Restart the run</button><button id="change-track" class="text-button">Choose track / difficulty</button><div class="pause-controls">W / ↑ Accelerate · S / ↓ Brake<br>A / ← Left · D / → Right<br>Space: launch, then press again on descent<br>R Recover · M Driving sound · Esc Pause</div></div></section>
     <section id="finish" class="overlay center-panel hidden"><div class="dialog finish-dialog">
@@ -103,7 +104,7 @@
     <section id="crash-panel" class="overlay center-panel hidden"><div class="dialog crash-dialog"><div id="crash-reason" class="eyebrow">LANDING THRUST MISSED</div><h2 id="crash-title">HARD<br><em>LANDING.</em></h2><p id="crash-description">Fire your thrusters while descending to slow the fall. Watch for THRUST NOW and tap Space again.</p><div class="crash-stats"><span>Your score is kept.</span><span>Return to the last checkpoint.</span></div><button id="retry" class="primary-button">RETRY CHECKPOINT <span>↗</span></button><button id="crash-restart" class="text-button">Restart the run</button><div class="pause-controls"><kbd>R</kbd> Retry · <kbd>SPACE</kbd> Landing thrust</div></div></section>
     <section id="error" class="overlay center-panel hidden"><div class="dialog"><h2>LET’S GET<br>YOU ROLLING.</h2><p id="error-text">Your browser could not start the 3D renderer. Enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary-button">TRY AGAIN <span>↗</span></button></div></section>
   </main>
-  <div id="touch-controls" class="touch-controls hidden"><div class="steer-buttons"><button data-control="left" aria-label="Steer left">←</button><button data-control="right" aria-label="Steer right">→</button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing">↑<small>THRUST</small></button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake">BRAKE</button><button data-control="gas" aria-label="Accelerate">GAS</button></div></div>
-  <script type="module" src="main.js?v=realism-1"></script>
+  <div id="touch-controls" class="touch-controls hidden" role="group" aria-label="Driving controls"><div class="steer-buttons"><button data-control="left" aria-label="Steer left"><span aria-hidden="true">←</span><small>A / ←</small></button><button data-control="right" aria-label="Steer right"><span aria-hidden="true">→</span><small>D / →</small></button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing"><span aria-hidden="true">↑</span><strong>THRUST</strong><small>SPACE</small></button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake"><strong>BRAKE</strong><small>S / ↓</small></button><button data-control="gas" class="gas-button" aria-label="Accelerate"><strong>GAS</strong><small>W / ↑</small></button></div></div>
+  <script type="module" src="main.js?v=cinematic-1"></script>
 </body>
 </html>

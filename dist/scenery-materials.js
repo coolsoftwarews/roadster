@@ -61,8 +61,23 @@ export function createScenerySurfaces(THREE){
     return [v,v-2,v-8];
   },{repeat:[4,4]});
   const grass=tile(128,128,(x,y)=>{
-    const v=216+Math.sin(x*.15)*Math.cos(y*.1)*13+(noise(x,y,29)-.5)*28;return [v-4,v,v-7];
+    const v=220+(cloud(x,y,7,21)-.5)*25+(cloud(x,y,29,64)-.5)*19+(noise(x,y,29)-.5)*15;return [v-4,v,v-7];
   },{repeat:[6,6]});
+  const snow=tile(128,128,(x,y)=>{
+    const v=239+(cloud(x,y,11,117)-.5)*12+(noise(x,y,72)-.5)*10;return [v-3,v,v+2];
+  },{repeat:[4,4]});
+  // A tiny bitmap sign is legible without loading fonts or image assets.
+  const font={T:['11111','00100','00100','00100','00100','00100','00100'],O:['01110','10001','10001','10001','10001','10001','01110'],K:['10001','10010','10100','11000','10100','10010','10001'],Y:['10001','10001','01010','00100','00100','00100','00100'],R:['11110','10001','10001','11110','10100','10010','10001'],U:['10001','10001','10001','10001','10001','10001','01110'],N:['10001','11001','11001','10101','10011','10011','10001']};
+  const neon=tile(128,128,(x,y)=>{
+    // Raw DataTexture rows start at UV v=0 (the bottom), unlike canvas rows.
+    y=127-y;
+    if(x<3||x>124||y<3||y>124)return [170,170,170];
+    for(const [word,top]of [['TOKYO',28],['RUN',76]]){
+      const scale=3,left=(128-(word.length*6-1)*scale)/2,gx=Math.floor((x-left)/scale),gy=Math.floor((y-top)/scale);
+      if(gx>=0&&gy>=0&&gy<7&&gx<word.length*6&&gx%6<5&&font[word[Math.floor(gx/6)]][gy][gx%6]==='1')return [255,255,255];
+    }
+    return [7,9,14];
+  });
   // Tileable, crossed wave frequencies produce subtle moving normal detail.
   const waterNormal=tile(128,128,(x,y)=>{
     const u=x/128*Math.PI*2,v=y/128*Math.PI*2;
@@ -82,5 +97,5 @@ export function createScenerySurfaces(THREE){
     mat.customProgramCacheKey=()=>'roadster-water-ripples-1';
     return mat;
   }
-  return {plaster,stone,bark,foliage,palm,glass,glassRoughness,roof,sand,grass,waterNormal,waterMaterial,textures,dispose(){for(const texture of textures)texture.dispose();}};
+  return {plaster,stone,bark,foliage,palm,glass,glassRoughness,roof,sand,grass,snow,neon,waterNormal,waterMaterial,textures,dispose(){for(const texture of textures)texture.dispose();}};
 }

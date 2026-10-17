@@ -1,8 +1,7 @@
-import {createScenerySurfaces} from './scenery-materials.js?v=realism-1';
+import {createScenerySurfaces} from './scenery-materials.js?v=cinematic-1';
 
 // Shared geometry and material tiles keep detailed city scenery light enough to race.
 export function installTrackScenery({scene,track,frame,pointOn,nearestTrack,length,THREE}){
-  if(track.id==='canyon')return;
   const root=new THREE.Group();root.name=`${track.id}-scenery`;scene.add(root);
   let seed=track.seed;
   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return(seed>>>0)/4294967296;};
@@ -13,6 +12,10 @@ export function installTrackScenery({scene,track,frame,pointOn,nearestTrack,leng
   const detailNoise=(x,z)=>{const v=Math.sin(x*12.9898+z*78.233)*43758.5453;return v-Math.floor(v);};
   const materials=new Map();
   function material(color,options={}){const key=color+JSON.stringify(Object.entries(options).map(([key,value])=>[key,value?.isTexture?value.uuid:value]));if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color,roughness:.85,...options}));return materials.get(key);}
+  const nightMaterials=[];
+  function litMaterial(color,options={},baseIntensity=.08,nightIntensity=1.4){const mat=material(color,{emissive:color,emissiveIntensity:baseIntensity,...options});if(!nightMaterials.some(item=>item.material===mat))nightMaterials.push({material:mat,baseIntensity,nightIntensity});return mat;}
+  root.userData.nightMaterials=nightMaterials;
+  root.userData.setNightIntensity=value=>{const amount=clamp(value,0,1);for(const item of nightMaterials)item.material.emissiveIntensity=item.baseIntensity+(item.nightIntensity-item.baseIntensity)*amount;};
   function put(geometry,mat,position,scale,rotation=0,quaternion){
     const key=geometry.uuid+mat.uuid;let batch=batches.get(key);if(!batch){batch={geometry,mat,matrices:[],colors:[]};batches.set(key,batch);}
     transform.position.set(...position);transform.rotation.set(0,rotation,0);if(quaternion)transform.quaternion.copy(quaternion);transform.scale.set(...scale);transform.updateMatrix();batch.matrices.push(transform.matrix.clone());batch.colors.push(new THREE.Color().setScalar(.92+detailNoise(position[0]+position[1],position[2])*.12));
@@ -23,7 +26,7 @@ export function installTrackScenery({scene,track,frame,pointOn,nearestTrack,leng
   function atRoad(s,side,distance){const p=pointOn(s,side*distance);return {x:p.x,z:p.z,y:groundY(p.x,p.z),yaw:frame(s).yaw};}
   function beam(a,b,radius,mat){const from=new THREE.Vector3(...a),to=new THREE.Vector3(...b),delta=to.clone().sub(from),mid=from.clone().add(to).multiplyScalar(.5);put(cylinderGeo,mat,mid.toArray(),[radius,delta.length(),radius],0,new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize()));}
 
-  const oakBark=material('#675348',{map:surfaces.bark,bumpMap:surfaces.bark,bumpScale:.05}),oakLeaf=material('#4a693e',{map:surfaces.foliage,roughness:.95}),oakLight=material('#63834b',{map:surfaces.foliage,roughness:.95}),palmBark=material('#a68e6d',{map:surfaces.bark,bumpMap:surfaces.bark,bumpScale:.035}),palmLeaf=material('#367854',{map:surfaces.palm,side:THREE.DoubleSide,roughness:.78}),window=material('#78949f',{map:surfaces.glass,roughnessMap:surfaces.glassRoughness,metalness:.42,roughness:.5,envMapIntensity:.9}),cream=material('#e8dfca',{map:surfaces.plaster});
+  const oakBark=material('#675348',{map:surfaces.bark,bumpMap:surfaces.bark,bumpScale:.05}),oakLeaf=material('#4a693e',{map:surfaces.foliage,roughness:.95}),oakLight=material('#63834b',{map:surfaces.foliage,roughness:.95}),palmBark=material('#a68e6d',{map:surfaces.bark,bumpMap:surfaces.bark,bumpScale:.035}),palmLeaf=material('#367854',{map:surfaces.palm,side:THREE.DoubleSide,roughness:.78}),window=litMaterial('#78949f',{map:surfaces.glass,emissiveMap:surfaces.glass,roughnessMap:surfaces.glassRoughness,metalness:.42,roughness:.5,envMapIntensity:.9},.02,.65),cream=material('#e8dfca',{map:surfaces.plaster});
   const frondGeo=new THREE.BufferGeometry(),frondPoints=[],frondUvs=[],frondIndices=[];
   for(let i=0;i<=10;i++){
     const t=i/10,width=Math.pow(Math.sin(t*Math.PI),.7)*(.75+(i%2)*.12),y=Math.sin(t*Math.PI)*.7-t*t*1.6;
@@ -97,7 +100,12 @@ export function installTrackScenery({scene,track,frame,pointOn,nearestTrack,leng
     }
   }
 
-  if(track.id==='austin'){
+  if(track.id==='canyon'){
+    const cactus=material('#71825b',{map:surfaces.bark,roughness:.95}),sandstone=material('#bf8763',{map:surfaces.stone,roughness:1});
+    for(let s=45;s<length-50;s+=61){const p=atRoad(s,s%122<61?1:-1,22+random()*15);if(!clear(p.x,p.z,3))continue;const h=3+random()*4;put(cylinderGeo,cactus,[p.x,p.y+h/2,p.z],[.38,h,.38]);for(const side of [-1,1]){const lift=h*(side>0?.5:.65);beam([p.x,p.y+lift,p.z],[p.x+side*1.3,p.y+lift+.2,p.z],.25,cactus);put(cylinderGeo,cactus,[p.x+side*1.3,p.y+lift+1,p.z],[.26,1.8,.26]);}}
+    const arch=atRoad(270,1,90),archGeo=new THREE.TorusGeometry(23,6,7,18,Math.PI);
+    if(clear(arch.x,arch.z,34)){put(archGeo,sandstone,[arch.x,arch.y+9,arch.z],[1,1,.7],arch.yaw);for(const side of [-1,1])box(sandstone,arch.x+Math.cos(arch.yaw)*side*23,arch.y+4,arch.z-Math.sin(arch.yaw)*side*23,12,12,10,arch.yaw);}
+  }else if(track.id==='austin'){
     // A pink-granite dome and classical wings reference the Texas Capitol.
     const capitol=atRoad(230,-1,96),stone=material('#c99b85',{map:surfaces.stone,bumpMap:surfaces.stone,bumpScale:.045}),roof=material('#626b6a',{metalness:.2,roughness:.6}),domeStone=material('#d8c9ad',{map:surfaces.plaster}),x=capitol.x,z=capitol.z,y=capitol.y;
     if(clear(x,z,55)){
@@ -155,7 +163,63 @@ export function installTrackScenery({scene,track,frame,pointOn,nearestTrack,leng
     for(let s=430;s<length-70;s+=52){for(const side of [-1,1]){const p=atRoad(s,side,31+random()*34);building(p.x,p.z,9+random()*5,7+random()*8,11+random()*5,homes[Math.floor(s/52)%5],p.yaw,'house');}}
     for(let i=0;i<36;i++)hill(-400+random()*1700,100+random()*1700,45+random()*85,60+random()*90,i%2?'#7a8866':'#6b7d5f');
     for(let s=35;s<length;s+=100){const p=atRoad(s,1,24+random()*20);oak(p.x,p.z,.8+random()*.4);}
+  }else if(track.id==='alpine'){
+    const pineGeo=new THREE.ConeGeometry(1,1,9),pineGreen=material('#36564c',{map:surfaces.foliage,roughness:1}),pineSnow=material('#e5edf0',{map:surfaces.snow,roughness:.96}),timber=material('#71584c',{map:surfaces.bark,roughness:1});
+    function pine(x,z,size){if(!clear(x,z,3.7*size))return;const y=groundY(x,z);put(cylinderGeo,oakBark,[x,y+3.3*size,z],[.35*size,6.6*size,.35*size]);for(let tier=0;tier<3;tier++){const r=(3.4-tier*.7)*size,cy=y+(3.6+tier*2.2)*size;put(pineGeo,pineGreen,[x,cy,z],[r,5.1*size,r],tier*.4);put(pineGeo,pineSnow,[x,cy+.65*size,z],[r*.81,4.1*size,r*.81],tier*.4);}}
+    for(let s=15;s<length-25;s+=23)for(const side of [-1,1]){const p=atRoad(s,side,23+random()*29);pine(p.x,p.z,.8+random()*.7);if(s%69<23){const q=atRoad(s+9,side,62+random()*40);pine(q.x,q.z,1.2+random());}}
+    // Shared rugged peaks blend exposed rock into snow near the ridgeline.
+    const peakPositions=[],peakColors=[],peakIndices=[],peakUvs=[],segments=16,levels=7;
+    const rockTone=new THREE.Color('#79868b'),snowTone=new THREE.Color('#edf4f7'),peakColor=new THREE.Color();
+    for(let ring=0;ring<=levels;ring++)for(let side=0;side<=segments;side++){const t=ring/levels,a=side%segments/segments*Math.PI*2,edge=1+detailNoise(side%segments,ring)*.15,radius=(1-t)*edge;peakPositions.push(Math.sin(a)*radius,t+(ring&&ring<levels?(detailNoise(side%segments,ring+8)-.5)*.055:0),Math.cos(a)*radius);peakUvs.push(side/segments,t);peakColor.copy(rockTone).lerp(snowTone,clamp((t-.53)*8+(detailNoise(side%segments,ring+24)-.5)*.8,0,1));peakColors.push(peakColor.r,peakColor.g,peakColor.b);if(ring<levels&&side<segments){const k=ring*(segments+1)+side;peakIndices.push(k,k+1,k+segments+1,k+1,k+segments+2,k+segments+1);}}
+    const peakGeo=new THREE.BufferGeometry();peakGeo.setAttribute('position',new THREE.Float32BufferAttribute(peakPositions,3));peakGeo.setAttribute('color',new THREE.Float32BufferAttribute(peakColors,3));peakGeo.setAttribute('uv',new THREE.Float32BufferAttribute(peakUvs,2));peakGeo.setIndex(peakIndices);peakGeo.computeVertexNormals();
+    const peakMat=material('#ffffff',{map:surfaces.stone,vertexColors:true,roughness:1,flatShading:true});
+    for(let i=0;i<34;i++){const s=i/(34-1)*length,p=atRoad(s,i%2?1:-1,170+random()*180),radius=60+random()*80;if(clear(p.x,p.z,radius+5))put(peakGeo,peakMat,[p.x,-30,p.z],[radius,140+random()*190,radius*.85],random()*6);}
+    for(let s=135;s<length-80;s+=330){const p=atRoad(s,s%660<330?1:-1,46+random()*22),w=17,h=10+random()*4,d=15;if(!building(p.x,p.z,w,h,d,'#bfa388',p.yaw,'house'))continue;
+      put(houseRoof,pineSnow,[p.x,p.y+h+.9,p.z],[w+1.7,6,d+1.7],p.yaw);
+      const local=(lx,ly,lz,bw,bh,bd,mat=timber)=>box(mat,p.x+Math.cos(p.yaw)*lx+Math.sin(p.yaw)*lz,p.y+ly,p.z-Math.sin(p.yaw)*lx+Math.cos(p.yaw)*lz,bw,bh,bd,p.yaw);
+      local(0,4.5,-d/2-1,w+1,.45,3);local(0,5.6,-d/2-2.2,w+1,.18,.18);for(let k=-4;k<=4;k++)local(k*2,5.1,-d/2-2.2,.12,1.1,.12);local(-w*.28,1.7,-d/2-.15,3,2.6,.2,window);
+    }
+    const viaductStone=material('#9ca5a4',{map:surfaces.stone,bumpMap:surfaces.stone,bumpScale:.07}),vx=-145,vz0=40,vz1=530,deckY=48,archGeo=new THREE.TorusGeometry(28,3.5,7,22,Math.PI),archQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI/2,0));
+    box(viaductStone,vx,deckY,(vz0+vz1)/2,23,4,vz1-vz0+26);
+    for(let z=vz0;z<=vz1;z+=70){for(const side of [-1,1])put(archGeo,viaductStone,[vx+side*9,deckY-33,z],[1,1,1],0,archQ);box(viaductStone,vx,4,z-35,23,76,11);}
+    for(const side of [-1,1])box(viaductStone,vx+side*11,deckY+3,(vz0+vz1)/2,.9,2,vz1-vz0+26);
+    root.userData.landmarks=['Snow peaks','Pine forest','Alpine chalets','Stone viaduct'];
+  }else if(track.id==='tokyo'){
+    const signFaceGeo=new THREE.PlaneGeometry(1,1);
+    const cityColors=['#777f91','#9497a2','#697887','#ada8b0'],neonPink=litMaterial('#fb65c5',{map:surfaces.neon,emissiveMap:surfaces.neon,roughness:.38},.45,2.5),neonBlue=litMaterial('#72dce9',{map:surfaces.neon,emissiveMap:surfaces.neon,roughness:.38},.4,2.2),neonGold=litMaterial('#f9bf68',{map:surfaces.neon,emissiveMap:surfaces.neon,roughness:.4},.35,2),signMaterials=[neonPink,neonBlue,neonGold],signFrame=material('#293344',{metalness:.45,roughness:.45});
+    for(let s=25,i=0;s<length-25;s+=54,i++)for(const side of [-1,1]){
+      const p=atRoad(s,side,36+random()*20),w=15+random()*10,h=22+random()*48,d=16+random()*9;if(!building(p.x,p.z,w,h,d,cityColors[i%4],p.yaw,'tower'))continue;
+      const local=(mat,lx,ly,lz,bw,bh,bd)=>box(mat,p.x+Math.cos(p.yaw)*lx+Math.sin(p.yaw)*lz,p.y+ly,p.z-Math.sin(p.yaw)*lx+Math.cos(p.yaw)*lz,bw,bh,bd,p.yaw);
+      // Independent outward-facing signs on both ends stay readable from either
+      // driving direction. FrontSide faces never show reversed backface text.
+      for(const face of [-1,1]){
+        const sign=(mat,lx,ly,lz,bw,bh)=>put(signFaceGeo,mat,[p.x+Math.cos(p.yaw)*lx+Math.sin(p.yaw)*lz,p.y+ly,p.z-Math.sin(p.yaw)*lx+Math.cos(p.yaw)*lz],[bw,bh,1],p.yaw+(face<0?Math.PI:0));
+        local(signFrame,-w*.34,10,face*(d/2+.45),5,14,.55);sign(signMaterials[i%3],-w*.34,10,face*(d/2+.78),4.6,13.4);
+        sign(signMaterials[(i+1)%3],w*.1,h*.72,face*(d/2+.18),w*.5,5);
+      }
+      local(signFrame,0,4.7,-d/2-1.4,w*.83,.45,3);for(let k=-2;k<=2;k++)local(window,k*w*.15,2.1,-d/2-.18,w*.12,3.2,.2);
+      if(i%3===0){const q=atRoad(s+25,side,115+random()*75);building(q.x,q.z,24,65+random()*65,24,cityColors[(i+2)%4],q.yaw);}
+    }
+    // An illuminated lattice tower and its observation deck anchor the opening district.
+    const tower=atRoad(225,-1,130),towerRed=material('#b66e61',{metalness:.55,roughness:.45}),towerWhite=material('#d8d8cf',{metalness:.45,roughness:.5}),towerGlow=litMaterial('#ffb87e',{roughness:.3},.25,2),towerBase=tower.y;
+    if(clear(tower.x,tower.z,37)){
+      for(const sx of [-1,1])for(const sz of [-1,1]){beam([tower.x+sx*28,towerBase,tower.z+sz*28],[tower.x+sx*5,towerBase+137,tower.z+sz*5],1.5,towerRed);for(let j=0;j<6;j++){const y0=12+j*20,y1=y0+20,r0=28-y0*.168,r1=28-y1*.168;beam([tower.x+sx*r0,towerBase+y0,tower.z+sz*r0],[tower.x-sx*r1,towerBase+y1,tower.z+sz*r1],.46,j%2?towerWhite:towerRed);}}
+      box(towerRed,tower.x,towerBase+70,tower.z,32,5,32);box(window,tower.x,towerBase+75,tower.z,28,5,28);box(towerGlow,tower.x,towerBase+78,tower.z,31,.6,31);put(cylinderGeo,towerWhite,[tower.x,towerBase+150,tower.z],[1.5,28,1.5]);put(sphereGeo,towerGlow,[tower.x,towerBase+165,tower.z],[1.3,1.3,1.3]);
+    }
+    // Elevated rail remains entirely beside the driving line, with paired rails,
+    // concrete piers, and a stationary commuter train on the opening section.
+    const railConcrete=material('#8b929d',{map:surfaces.stone,roughness:.85}),railMetal=material('#525b69',{metalness:.65,roughness:.4}),trainBody=material('#d2d7dc',{metalness:.45,roughness:.35}),trainStripe=litMaterial('#6cd2dc',{roughness:.4},.1,.6);
+    for(let s=35;s<Math.min(length-40,950);s+=13){const p=pointOn(s,-25,13),f=frame(s);box(railConcrete,p.x,p.y,p.z,7,1.25,13.4,f.yaw);for(const side of [-1,1]){const q=pointOn(s,-25+side*1.8,13.8);box(railMetal,q.x,q.y,q.z,.14,.18,13.4,f.yaw);}if(s%52<13){const y=groundY(p.x,p.z);box(railConcrete,p.x,(y+p.y)/2,p.z,2.2,p.y-y,2.2,f.yaw);}}
+    for(let i=0;i<5;i++){const s=140+i*17,p=pointOn(s,-25,16.3),f=frame(s);box(trainBody,p.x,p.y,p.z,4.4,4.5,15.5,f.yaw);for(const side of [-1,1]){const q=pointOn(s,-25+side*2.23,16.5);box(window,q.x,q.y,q.z,.1,1.4,12.7,f.yaw);box(trainStripe,q.x,q.y-1.4,q.z,.12,.4,15,f.yaw);}box(roofEquipment,p.x,p.y+2.7,p.z,2.4,.9,6,f.yaw);}
+    root.userData.landmarks=['Neon district','Lattice observation tower','Elevated railway','City train'];
   }
+
+  // Shared roadside layers use instancing: hundreds of rails, shrubs, and lamps
+  // add depth at the driver's eye level without creating hundreds of draw calls.
+  const railSteel=material(track.id==='alpine'?'#8a969e':'#87928e',{metalness:.5,roughness:.55}),streetPole=material('#56636c',{metalness:.65,roughness:.5}),streetGlow=litMaterial(track.id==='tokyo'?'#beddf3':'#fff1cb',{roughness:.3},.25,2.2),shrubMat=material(track.id==='alpine'?'#566b62':track.id==='canyon'?'#8a865a':'#647b4d',{map:surfaces.foliage,roughness:1}),groundRocks=material(track.id==='alpine'?'#9ca9ac':'#949589',{map:surfaces.stone,roughness:1});
+  for(let s=30;s<length-30;s+=8){const f=frame(s);if(track.id==='tokyo'||Math.abs(f.curvature||0)>.002||track.id==='alpine')for(const side of [-1,1]){const p=pointOn(s,side*12.8,.7);box(railSteel,p.x,p.y,p.z,.18,1.4,.18,f.yaw);box(railSteel,p.x,p.y+.45,p.z,.2,.32,8.15,f.yaw);}}
+  for(let s=40;s<length-45;s+=track.id==='tokyo'?54:112){const side=Math.floor(s/(track.id==='tokyo'?54:112))%2?1:-1,p=pointOn(s,side*14.5,0),q=pointOn(s,side*12.7,8.3),f=frame(s);put(cylinderGeo,streetPole,[p.x,p.y+4.25,p.z],[.15,8.5,.15]);beam([p.x,p.y+8.3,p.z],[q.x,q.y,q.z],.12,streetPole);box(streetPole,q.x,q.y,q.z,.85,.27,1.8,f.yaw);box(streetGlow,q.x,q.y-.15,q.z,.7,.05,1.55,f.yaw);}
+  for(let s=35;s<length-30;s+=17){const side=random()>.5?1:-1,p=atRoad(s,side,18+random()*16),size=.7+random()*1.1;if(!clear(p.x,p.z,size+1))continue;put(rockGeo,s%51<17?groundRocks:shrubMat,[p.x,p.y+size*.35,p.z],[size*1.7,size*.7,size],random()*6);}
 
   for(const {geometry,mat,matrices,colors}of batches.values()){
     const mesh=new THREE.InstancedMesh(geometry,mat,matrices.length);matrices.forEach((matrix,i)=>{mesh.setMatrixAt(i,matrix);mesh.setColorAt(i,colors[i]);});mesh.castShadow=true;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;root.add(mesh);
