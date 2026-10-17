@@ -26,9 +26,17 @@ Each circuit has five ramps that launch automatically. After every jump, press S
 
 Graphics include procedural asphalt, sandstone strata, car reflections and wheel details, tire smoke/skid marks, thrust plumes, landing dust and pooled explosion effects. Audio is synthesized locally with separate motor, wind, road, tire and impact layers.
 
+## Money Shots
+
+Occasional thrust jumps and ramp flights trigger a two-second cinematic of the actual detailed 3D car. Front, rear, side, low and overhead cameras show the stunt at 0.22× simulation speed. The normal chase or cockpit camera returns before the landing cue; steering, gas and landing thrust remain available. Press C to skip a shot. Enable or disable Money Shots in the pre-race guide or reopen it with ?. The preference is saved locally, and the default is off when the browser requests reduced motion.
+
+The results screen can turn the latest captured Money Shot into a downloadable animated GIF. It records the actual game view at 12 fps in a 640×360 scene, with a driver and results footer added below it; the final height grows to fit the full driver identity. Clips stay in memory for the current run only and are cleared when a new race begins or the page reloads. Download the GIF and attach it to a post manually.
+
 ## Driver identity and sharing
 
-Enter an optional driver identity in the Driver field (255 characters maximum) before racing. The identity and last completed result persist in this browser. Results show the full identity and a downloadable 1200×675 PNG share card, including roadster.coolsoftware.io at the bottom. Post to X opens a prefilled composer with track name, score, time and the game URL; save the image card and attach it manually in X. Long names are shortened only in the prefilled post to fit, never on the saved card. This does not connect or change DNS for the printed custom domain.
+Enter an optional driver identity in the Driver field (255 characters maximum) before racing. The identity and last completed result persist in this browser. Results show the full identity and a share-card preview with launch artwork, circuit details, score, time and roadster.coolsoftware.io. Choose a wide 2400×1350 or square 1600×1600 PNG, then Download PNG or Copy Image where the browser supports it. The preview updates with the selected format, and the export panel shows its dimensions and file size.
+
+Post to X opens a prefilled composer with track name, score, time and the game URL. Download or copy the image card and attach or paste it manually in X. Long names may be shortened in the prefilled post and sanitized download filename; the saved card retains the full identity. This does not connect or change DNS for the printed custom domain.
 
 ## Social link previews
 
@@ -79,7 +87,7 @@ Live music is delivered by 181.FM: Rock40, Highway181, The Beat, and The Heart. 
 
 The home screen uses a live 3D cinematic view of the detailed Roadster in the selected circuit, with a slow orbit, subtle movement and visible thrusters. Pause Intro stops the camera orbit; reduced-motion preferences start it paused. This is rendered in the game scene rather than downloading a video. Track, difficulty, driver and weather selectors remain available beside the preview. Detailed driving instructions appear in the centered pre-race guide instead of the home page, and the Follow me on X link remains at the bottom left: https://x.com/coolsoftware_ws.
 
-The earlier generated launch art remains bundled at `dist/assets/roadster-launch.png` for social link previews; generation details are in `docs/launch-art.md`.
+The earlier generated launch art remains bundled at `dist/assets/roadster-launch.png` for result cards and social link previews; generation details are in `docs/launch-art.md`.
 
 ## Collisions and sound controls
 

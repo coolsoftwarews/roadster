@@ -2,7 +2,9 @@ import * as THREE from './vendor/three.module.min.js';
 import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=drive-2';
 import {DrivingAudio} from './audio.js?v=drive-2';
 import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=cinematic-1';
-import {renderResultCard} from './result-card.js?v=cinematic-1';
+import {createCardExporter} from './card-export.js?v=cards-2';
+import {MoneyShotDirector,shotCameraPose} from './money-shots.js?v=money-1';
+import {createMoneyShotRecorder} from './money-shot-gif.js?v=money-1';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
 import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster,createGroundTexture} from './visual-effects.js?v=realism-1';
 import {loadDetailedRoadster} from './detailed-roadster.js?v=model-loading-1';
@@ -280,6 +282,12 @@ for(let row=0;row<2;row++)for(let col=0;col<20;col++){const tile=new THREE.Mesh(
 
 const audio=new DrivingAudio();const input={gas:false,brake:false,left:false,right:false};let last=performance.now(),elapsed=0,noticeUntil=0,shake=0,renderFrames=0,thrustGlow=0,crashDelay=-1,flashTime=0,landingCuePlayed=false;
 let cameraTarget=new THREE.Vector3(),cameraInitialized=false;const tempLook=new THREE.Vector3();
+let moneyShotsEnabled=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+try{const saved=localStorage.getItem('roadster-run-money-shots');if(saved!==null)moneyShotsEnabled=saved==='true';}catch{}
+const moneyShots=new MoneyShotDirector({enabled:moneyShotsEnabled}),shotRecorder=createMoneyShotRecorder();
+let shotState={active:false,timeScale:1},gifUrl=null,gifGeneration=0,exportResult=null;
+$('money-shots-enabled').checked=moneyShotsEnabled;
+$('money-shots-enabled').addEventListener('change',()=>{moneyShotsEnabled=$('money-shots-enabled').checked;moneyShots.setEnabled(moneyShotsEnabled);try{localStorage.setItem('roadster-run-money-shots',String(moneyShotsEnabled));}catch{}});
 let cameraMode='chase';try{if(localStorage.getItem('roadster-run-camera')==='cockpit')cameraMode='cockpit';}catch{}
 function renderCameraToggle(){
   const seated=cameraMode==='cockpit',button=$('camera-toggle');
@@ -289,7 +297,7 @@ function renderCameraToggle(){
   $('camera-label').textContent=seated?'COCKPIT':'CHASE';
   document.body.dataset.camera=cameraMode;
 }
-function toggleCamera(){cameraMode=cameraMode==='chase'?'cockpit':'chase';cameraInitialized=false;try{localStorage.setItem('roadster-run-camera',cameraMode);}catch{}renderCameraToggle();}
+function toggleCamera(){if(moneyShots.active){moneyShots.stop();return;}cameraMode=cameraMode==='chase'?'cockpit':'chase';cameraInitialized=false;try{localStorage.setItem('roadster-run-camera',cameraMode);}catch{}renderCameraToggle();}
 $('camera-toggle').addEventListener('click',toggleCamera);renderCameraToggle();
 $('track-distance').textContent=(length/1000).toFixed(1);$('obstacle-count').textContent=run.obstacles.length;$('total').textContent=run.obstacles.length;
 const map=$('minimap'),mapctx=map.getContext('2d');const bounds={minX:Math.min(...samples.map(p=>p.x)),maxX:Math.max(...samples.map(p=>p.x)),minZ:Math.min(...samples.map(p=>p.z)),maxZ:Math.max(...samples.map(p=>p.z))};const scale=Math.min(205/(bounds.maxX-bounds.minX),168/(bounds.maxZ-bounds.minZ));
@@ -315,6 +323,34 @@ let runDriver=displayDriver(driverField.value),lastResult=loadResult();
 function updateDriver(){const value=normalizeDriver(driverField.value);if(driverField.value!==value)driverField.value=value;$('driver-count').textContent=value.length+' / 255';const saved=saveDriver(value);$('driver-save-status').textContent=saved?'Saved in this browser · shown on your results and card':'Used for this race · browser storage is unavailable';}
 driverField.addEventListener('input',updateDriver);driverField.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('start').click();}});updateDriver();
 function readBest(trackId=track.id,difficultyId=difficulty.id){return loadBest(trackId,difficultyId);}
+const cardExporter=createCardExporter({canvas:$('result-card'),downloadLink:$('save-card'),copyButton:$('copy-card'),formatSelect:$('card-format'),status:$('share-help'),metadata:$('card-file-info')});
+function showExportPreview(gif=false){
+  const showGif=gif&&Boolean(gifUrl);
+  $('result-card').classList.toggle('hidden',showGif);$('gif-preview').classList.toggle('hidden',!showGif);
+  $('preview-card').setAttribute('aria-pressed',String(!showGif));$('preview-gif').setAttribute('aria-pressed',String(showGif));
+}
+function clearGifExport(){
+  gifGeneration++;if(gifUrl)URL.revokeObjectURL(gifUrl);gifUrl=null;
+  $('gif-preview').removeAttribute('src');$('save-gif').removeAttribute('href');$('save-gif').classList.add('hidden');
+  $('make-gif').classList.remove('hidden');$('make-gif').disabled=!shotRecorder.available;$('preview-gif').disabled=!shotRecorder.available;
+  $('gif-status').textContent=shotRecorder.available?'Your latest Money Shot is ready to turn into a GIF.':'A GIF becomes available after a Money Shot is captured this run.';
+  showExportPreview(false);
+}
+async function prepareMoneyShotGif(){
+  if(gifUrl){showExportPreview(true);return;}
+  if(!shotRecorder.available||!exportResult||$('make-gif').disabled)return;
+  const token=++gifGeneration;$('make-gif').disabled=true;$('preview-gif').disabled=true;$('gif-status').textContent='Creating your animated Money Shot…';
+  try{
+    const blob=await shotRecorder.export(exportResult);if(token!==gifGeneration)return;
+    gifUrl=URL.createObjectURL(blob);$('gif-preview').src=gifUrl;$('save-gif').href=gifUrl;
+    $('save-gif').download='roadster-'+exportResult.trackId+'-'+exportResult.score+'-money-shot.gif';
+    $('save-gif').classList.remove('hidden');$('make-gif').classList.add('hidden');$('preview-gif').disabled=false;
+    const dimensions=shotRecorder.exportDimensions;
+    $('gif-status').textContent=dimensions.width+' × '+dimensions.height+' · GIF · '+(blob.size/1048576).toFixed(1)+' MB · Ready to download';showExportPreview(true);
+  }catch(error){if(token!==gifGeneration)return;$('gif-status').textContent='The GIF could not be created. Try again; your PNG card is still available.';$('make-gif').disabled=false;$('preview-gif').disabled=false;console.warn('Money Shot export unavailable',error);}
+}
+$('make-gif').addEventListener('click',prepareMoneyShotGif);$('preview-gif').addEventListener('click',prepareMoneyShotGif);
+$('preview-card').addEventListener('click',()=>showExportPreview(false));$('card-format').addEventListener('change',()=>showExportPreview(false));
 function showResults(result,isBest=false){
   clearInput();$('touch-controls').classList.add('hidden');$('intro').classList.add('hidden');$('intro-footer').classList.add('hidden');$('finish').classList.remove('hidden');
   $('again').firstChild.textContent='DRIVE '+track.city.toUpperCase()+' AGAIN ';
@@ -322,12 +358,14 @@ function showResults(result,isBest=false){
   $('finish-track').textContent=getTrack(result.trackId).name.toUpperCase()+' · '+getDifficulty(result.difficultyId).name.toUpperCase()+' COMPLETE';
   const best=readBest(result.trackId,result.difficultyId);$('best-time').textContent=formatTime(Number.isFinite(best.time)?best.time:result.time);$('new-best').classList.toggle('hidden',!isBest);
   $('finish-copy').textContent=result.successfulJumps+' safe landings · '+result.ramps+' / '+result.totalRamps+' ramps completed.';
-  $('post-x').href=buildXIntent(result);$('share-help').textContent='Save the card, then attach it to your X post. Your post opens for review.';
-  try{const canvas=$('result-card');renderResultCard(canvas,result);canvas.setAttribute('aria-label','Results for '+result.driver+': '+result.score+' points in '+formatTime(result.time));$('save-card').href=canvas.toDataURL('image/png');$('save-card').download='roadster-'+result.score+'-'+Math.round(result.time)+'s.png';$('save-card').classList.remove('hidden');canvas.parentElement.classList.remove('hidden');}
-  catch(error){$('save-card').classList.add('hidden');$('result-card').parentElement.classList.add('hidden');$('share-help').textContent='The image could not be generated. You can still post your results to X.';console.error('Result card unavailable',error);}
+  $('post-x').href=buildXIntent(result);
+  exportResult={...result};clearGifExport();
+  $('result-card').setAttribute('aria-label','Results for '+result.driver+': '+result.score+' points in '+formatTime(result.time));
+  cardExporter.show(result);
   $('finish').querySelector('.dialog').scrollTop=0;$('post-x').focus({preventScroll:true});
 }
 function changeDriver(){
+  moneyShots.stop();clearGifExport();
   clearInput();run.reset();fx.reset();car.visible=true;shadow.visible=true;cameraInitialized=false;crashDelay=-1;thrustGlow=0;
   for(const id of ['finish','pause-panel','crash-panel','hud','touch-controls','landing-cue'])$(id).classList.add('hidden');
   $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');document.body.classList.remove('playing','in-flight');$('intro').scrollTop=0;driverField.focus({preventScroll:true});
@@ -364,7 +402,7 @@ $('controls-panel').addEventListener('keydown',e=>{
 let cinematicPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,cinematicTime=0;
 function renderCinematicToggle(){document.body.classList.toggle('cinematic-motion-paused',cinematicPaused);$('cinematic-toggle').textContent=cinematicPaused?'PLAY INTRO':'PAUSE INTRO';$('cinematic-toggle').setAttribute('aria-label',cinematicPaused?'Play intro':'Pause intro');$('cinematic-toggle').setAttribute('aria-pressed',String(cinematicPaused));}
 $('cinematic-toggle').addEventListener('click',()=>{cinematicPaused=!cinematicPaused;renderCinematicToggle();});renderCinematicToggle();
-async function startRun(){if(!detailedCar)return;runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();soundControls.close();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;$('notice').classList.remove('visible');}
+async function startRun(){if(!detailedCar)return;moneyShots.reset();shotRecorder.reset();shotState={active:false,timeScale:1};clearGifExport();runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();soundControls.close();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;$('notice').classList.remove('visible');}
 function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();radio.resume();closeRadio();soundControls.close();}}
 function thrust(){
   if(run.jump())return;
@@ -389,7 +427,7 @@ function finish(){
   saveBest(track.id,{time:Math.min(run.time,previous.time),score:Math.max(run.score,previous.score)},difficulty.id);
   const result={trackId:track.id,difficultyId:difficulty.id,driver:runDriver,score:run.score,time:run.time,cleared:run.cleared,total:run.obstacles.length,ramps:run.ramps.filter(r=>r.cleared).length,totalRamps:run.ramps.length,successfulJumps:run.successfulJumps};
   lastResult=result;const saved=saveResult(result);showResults(result,isBest);
-  if(!saved)$('share-help').textContent='Save your card before closing this tab; this browser could not remember the result. Attach the card to your X post.';
+  if(!saved)$('finish-copy').append(' Save your card before closing this tab; this browser could not remember the result.');
   audio.reward();
 }
 $('retry').addEventListener('click',retryCheckpoint);$('crash-restart').addEventListener('click',()=>showControls());
@@ -420,12 +458,12 @@ document.querySelectorAll('[data-control]').forEach(b=>{const c=b.dataset.contro
 window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();cameraInitialized=false;});
 
 function animate(now){
-  requestAnimationFrame(animate);const dt=Math.min((now-last)/1000,.035);last=now;elapsed+=dt;const playing=run.state==='running';
+  requestAnimationFrame(animate);const realDt=Math.max(0,(now-last)/1000),dt=Math.min(realDt,.035)*(moneyShots.active?shotState.timeScale:1);last=now;elapsed+=dt;const playing=run.state==='running';
   if(run.state==='ready'&&!cinematicPaused&&$('controls-panel').classList.contains('hidden'))cinematicTime+=dt;
   if(playing){run.update(dt,input);for(const event of run.drainEvents()){
     const eventPosition=pointOn(run.s,run.offset,run.height+.5);
-    if(event.type==='jump'){audio.thrust();thrustGlow=.42;shake=.12;fx.thrust(eventPosition);landingCuePlayed=false;message('TAKE FLIGHT','Press Space again while descending.');}
-    if(event.type==='ramp'){audio.ramp();shake=.13;landingCuePlayed=false;message('RAMP LAUNCH','Wait for descent. Then fire your landing thrusters.');}
+    if(event.type==='jump'){moneyShots.beginFlight('jump');audio.thrust();thrustGlow=.42;shake=.12;fx.thrust(eventPosition);landingCuePlayed=false;message('TAKE FLIGHT','Press Space again while descending.');}
+    if(event.type==='ramp'){moneyShots.beginFlight('ramp');audio.ramp();shake=.13;landingCuePlayed=false;message('RAMP LAUNCH','Wait for descent. Then fire your landing thrusters.');}
     if(event.type==='landingThrust'){audio.landingThrust();thrustGlow=.8;shake=.14;fx.thrust(eventPosition);}
     if(event.type==='land'){audio.land();shake=.16;fx.land(eventPosition);if(event.points){audio.reward();message('+'+event.points,event.rampBonus?'RAMP LANDED · CLEAN TOUCHDOWN':'CLEAN LANDING','reward');}}
     if(event.type==='hit'){audio.collision();shake=.3;fx.collision(eventPosition);message(event.obstacle==='pothole'?'WATCH THE ROAD':'CONTACT','Build speed, then jump earlier.','warning');}
@@ -434,6 +472,11 @@ function animate(now){
     if(event.type==='checkpoint')message('CHECKPOINT','Your progress is safe.');
     if(event.type==='finish')finish();
   }}
+  shotState=moneyShots.update(realDt,run);
+  if(shotState.started){shotRecorder.start();shake=0;}
+  if(shotState.ended){shotRecorder.finish();cameraInitialized=false;}
+  document.body.classList.toggle('money-shot-active',shotState.active);$('money-shot-overlay').classList.toggle('hidden',!shotState.active);
+  if(shotState.active)$('money-shot-angle').textContent=({front:'FRONT TRACKING',rear:'REAR CHASE',side:'SIDE SWEEP',low:'LOW FLYBY',top:'OVERHEAD'}[shotState.angle]);
   const preview=run.state==='ready';const visualS=preview?run.obstacles[0].s-45:run.s;const f=frame(visualS);const pos=pointOn(visualS,preview?0:run.offset,run.height+.04);
   if(preview)pos.y+=.10+Math.sin(cinematicTime*.7)*.035;
   car.position.copy(pos);const steeringYaw=Math.atan2(run.lateralVelocity,Math.max(9,run.speed));
@@ -459,11 +502,16 @@ function animate(now){
     const centerX=rect?rect.left+rect.width/2:innerWidth*.68,centerY=rect?rect.top+rect.height*.47:innerHeight*.38;
     camera.setViewOffset(innerWidth,innerHeight,innerWidth/2-centerX,innerHeight/2-centerY,innerWidth,innerHeight);
   }else camera.clearViewOffset();
-  const seated=!preview&&cameraMode==='cockpit'&&run.state!=='crashed'&&run.state!=='finished';
+  const seated=!preview&&!shotState.active&&cameraMode==='cockpit'&&run.state!=='crashed'&&run.state!=='finished';
   cockpit.root.visible=seated;
   car.visible=!seated&&run.state!=='crashed';
   camera.near=seated?.06:.2;
-  if(seated){
+  if(shotState.active){
+    const pose=shotCameraPose(shotState.angle,shotState.progress,camera.aspect);
+    desired.copy(pos).addScaledVector(forward,pose.forward).addScaledVector(f.right,pose.right);desired.y=pos.y+pose.height;
+    desired.y=Math.max(desired.y,pointOn(visualS+pose.forward,run.offset+pose.right,.8).y);
+    target.copy(pos).add(new THREE.Vector3(0,.55,0));camera.up.set(0,1,0);camera.position.copy(desired);cameraTarget.copy(target);cameraInitialized=true;
+  }else if(seated){
     // Anchor the driver's eyes to the vehicle, including its jump and bank.
     desired.copy(pos).add(new THREE.Vector3(.34,1.06,.08).applyQuaternion(car.quaternion));
     target.copy(desired).add(new THREE.Vector3(0,-.4,30).applyQuaternion(car.quaternion));
@@ -474,8 +522,8 @@ function animate(now){
     camera.up.set(0,1,0);
     if(!cameraInitialized){camera.position.copy(desired);cameraTarget.copy(target);cameraInitialized=true;}else{camera.position.lerp(desired,1-Math.exp(-dt*5));cameraTarget.lerp(target,1-Math.exp(-dt*6));}
   }
-  tempLook.copy(cameraTarget);if(shake>0){const amount=seated?.25:1;tempLook.x+=(Math.random()-.5)*shake*amount;tempLook.y+=(Math.random()-.5)*shake*amount;shake=Math.max(0,shake-dt*.8);}camera.lookAt(tempLook);
-  camera.fov=seated?74:preview&&cinematicPaused?42:lerp(camera.fov,preview?42:56+run.speed*.045,dt*3);camera.updateProjectionMatrix();sky.position.copy(camera.position);
+  tempLook.copy(cameraTarget);if(shake>0&&!shotState.active){const amount=seated?.25:1;tempLook.x+=(Math.random()-.5)*shake*amount;tempLook.y+=(Math.random()-.5)*shake*amount;shake=Math.max(0,shake-dt*.8);}camera.lookAt(tempLook);
+  camera.fov=shotState.active?46:seated?74:preview&&cinematicPaused?42:lerp(camera.fov,preview?42:56+run.speed*.045,dt*3);camera.updateProjectionMatrix();sky.position.copy(camera.position);
   sun.position.copy(pos).add(new THREE.Vector3(...weather.preset.sunOffset));sun.target.position.copy(pos);
   weather.update(run.state==='paused'||(preview&&cinematicPaused)?0:dt,pos,forward);
 
@@ -504,5 +552,6 @@ function animate(now){
     drawMap();
   }
   if(elapsed>noticeUntil)$('notice').classList.remove('visible');renderer.render(scene,camera);
+  if(shotState.active)shotRecorder.capture(renderer.domElement,realDt);
 }
 requestAnimationFrame(animate);

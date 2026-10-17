@@ -7,7 +7,7 @@ import {
 } from '../dist/result-sharing.js';
 import {TRACKS} from '../dist/tracks.js';
 import {DIFFICULTIES} from '../dist/difficulty.js';
-import {renderResultCard} from '../dist/result-card.js';
+import {renderResultCard,CARD_FORMATS,layoutCardDriver} from '../dist/result-card.js';
 
 const result={trackId:'canyon',difficultyId:'easy',driver:'Ada',score:750,time:98.25,cleared:6,total:18,ramps:1,totalRamps:5,successfulJumps:7};
 function memoryStorage(){
@@ -155,26 +155,89 @@ test('long Unicode identities fit a conservative X budget without changing the s
   }
 });
 
-test('every X post and personalized card names the completed track and difficulty',()=>{
-  for(const track of TRACKS)for(const difficulty of DIFFICULTIES){
-    const snapshot={...result,trackId:track.id,difficultyId:difficulty.id,driver:'https://driver.example/'+'a'.repeat(230)};
+function cardContext() {
+  const text = [], images = [];
+  const target = {
+    font: '16px Arial', textAlign: 'left',
+    fillText(value, x, y) {
+      const size = Number(this.font.match(/([\d.]+)px/)?.[1]) || 16;
+      text.push({value: String(value), x, y, size, width: this.measureText(value).width});
+    },
+    measureText(value) {
+      const size = Number(this.font.match(/([\d.]+)px/)?.[1]) || 16;
+      return {width: Array.from(String(value)).reduce((sum, char) => sum + (char.codePointAt(0) > 255 ? 1 : .56) * size, 0)};
+    },
+    drawImage(...args) { images.push(args); },
+    createLinearGradient() { return {addColorStop(){}}; },
+    createRadialGradient() { return {addColorStop(){}}; }
+  };
+  const context = new Proxy(target, {get(object,key){return key in object ? object[key] : ()=>{};}});
+  return {context, text, images};
+}
+
+test('both social formats identify every completed track and difficulty, preserving driver identity',()=>{
+  for(const track of TRACKS)for(const difficulty of DIFFICULTIES)for(const format of Object.keys(CARD_FORMATS)){
+    const snapshot={...result,trackId:track.id,difficultyId:difficulty.id,driver:'https://driver.example/'+'a'.repeat(232)};
     const intent=new URL(buildXIntent(snapshot));
     assert.ok(intent.searchParams.get('text').includes(track.name+' · '+difficulty.name));
-    const text=[];
-    const context=new Proxy({
-      fillText(value){text.push(String(value));},
-      measureText(value){return {width:[...String(value)].length*14};},
-      createLinearGradient(){return {addColorStop(){}};},
-      createRadialGradient(){return {addColorStop(){}};}
-    },{get(target,key){return key in target?target[key]:()=>{};}});
+    const {context,text}=cardContext();
     const canvas={getContext:()=>context};
-    assert.equal(renderResultCard(canvas,snapshot),canvas);
-    assert.equal(canvas.width,1200);assert.equal(canvas.height,675);
-    assert.ok(text.includes(`${track.name.toUpperCase()}  /  ${difficulty.name.toUpperCase()}`));
-    const driverStart=text.indexOf('DRIVER')+1,driverEnd=text.indexOf('YOUR LINE. YOUR PACE. YOUR NEXT RECORD.');
-    assert.equal(text.slice(driverStart,driverEnd).join(''),snapshot.driver);
-    assert.ok(text.includes('roadster.coolsoftware.io'));
+    assert.equal(renderResultCard(canvas,snapshot,{format}),canvas);
+    assert.equal(canvas.width,CARD_FORMATS[format].width);
+    assert.equal(canvas.height,CARD_FORMATS[format].height);
+    const values=text.map(item=>item.value);
+    assert.ok(values.includes(track.name.toUpperCase()));
+    assert.ok(values.some(value=>value.includes(difficulty.name.toUpperCase())));
+    const driverStart=values.indexOf('DRIVER')+1;
+    const driverEnd=values.indexOf('YOUR NEXT RECORD AWAITS.');
+    const driverRows=text.slice(driverStart,driverEnd);
+    assert.equal(driverRows.map(row=>row.value).join(''),snapshot.driver);
+    assert.ok(driverRows.every(row=>row.x+row.width<=canvas.width/2-36 && row.y+row.size<=canvas.height/2-45));
+    assert.ok(values.includes('roadster.coolsoftware.io'));
+    for(const label of ['TOTAL SCORE','FINISH TIME','OBSTACLES CLEARED','RAMPS LANDED','SAFE LANDINGS'])assert.ok(values.includes(label));
+    assert.ok(values.includes('750'));
+    assert.ok(values.includes('01:38.3'));
   }
+});
+
+test('long Unicode driver names fit both cards without ellipsis, clipping, or broken graphemes',()=>{
+  for(const driver of ['界'.repeat(255),'👩‍🚀'.repeat(51),'https://example.com/'+'x'.repeat(235),'Ada '.repeat(63)+'XYZ']){
+    for(const [width,height] of [[1060,55],[684,51]]){
+      const {context}=cardContext();
+      const layout=layoutCardDriver(context,driver,width,height);
+      assert.equal(layout.lines.join(''),driver);
+      assert.ok(layout.lines.length*layout.lineHeight<=height);
+      assert.ok(layout.lines.every(line=>context.measureText(line).width<=width));
+      if(driver.startsWith('👩')) assert.ok(layout.lines.every(line=>line.replaceAll('👩‍🚀','')===''));
+    }
+  }
+});
+
+test('card artwork stays contained in both formats and invalid artwork falls back safely',()=>{
+  const artwork={naturalWidth:1672,naturalHeight:941};
+  for(const format of Object.keys(CARD_FORMATS)){
+    const {context,images}=cardContext();
+    const canvas={getContext:()=>context};
+    renderResultCard(canvas,result,{format,artwork});
+    assert.equal(images.length,1);
+    const [image,x,y,width,height]=images[0];
+    assert.equal(image,artwork);
+    assert.ok(Math.abs(width/height-artwork.naturalWidth/artwork.naturalHeight)<1e-10);
+    assert.ok(x>=0&&y>=0&&x+width<=canvas.width/2&&y+height<=canvas.height/2);
+  }
+  const {context,text}=cardContext();
+  context.drawImage=()=>{throw new Error('not decoded');};
+  assert.doesNotThrow(()=>renderResultCard({getContext:()=>context},result,{artwork}));
+  assert.ok(text.some(item=>item.value===TRACKS[0].tagline));
+});
+
+test('card values stay finite and an unknown format uses the wide export',()=>{
+  const {context,text}=cardContext();
+  const canvas={getContext:()=>context};
+  renderResultCard(canvas,{...result,score:Infinity,time:NaN,cleared:-1,total:undefined,ramps:NaN,successfulJumps:Infinity},{format:'invalid'});
+  assert.equal(canvas.width,2400);assert.equal(canvas.height,1350);
+  assert.ok(text.every(item=>!/(NaN|Infinity|undefined)/.test(item.value)));
+  assert.ok(text.every(item=>Number.isFinite(item.size)&&Number.isFinite(item.x)&&Number.isFinite(item.y)));
 });
 
  test('result and post clocks round across minute boundaries consistently',()=>{const result={driver:'Driver',score:150,time:59.99,cleared:0,total:18,ramps:1,totalRamps:5,successfulJumps:1};assert.match(buildShareText(result),/01:00\.0/);assert.doesNotMatch(buildShareText(result),/00:60/);});

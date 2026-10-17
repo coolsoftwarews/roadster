@@ -26,7 +26,7 @@
   <meta name="twitter:image" content="https://roadster.coolsoftware.io/assets/roadster-launch.png">
   <meta name="twitter:image:alt" content="A red Roadster hovering above a launch stage on glowing blue thrusters.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=clean-hud-1">
+  <link rel="stylesheet" href="style.css?v=cards-2">
   <script defer src="https://analytics-ops1.coolsoftware.io/script.js" data-website-id="8581cf0e-5736-4eef-ac55-14426630d248"></script>
 </head>
 <body>
@@ -85,26 +85,31 @@
       <div class="dialog controls-dialog"><div class="eyebrow">BEFORE YOU DRIVE</div><h2 id="controls-title">READY FOR <br><em>LIFTOFF?</em></h2><p id="controls-summary">A quick look at your controls. The race starts when you’re ready.</p>
         <div class="control-guide"><div class="guide-drive"><div class="guide-keys" aria-hidden="true"><kbd>W</kbd><div><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div></div><div><strong>DRIVE</strong><p>W / ↑ gas · S / ↓ brake<br>A / ← left · D / → right</p></div></div><div class="guide-thrust"><kbd>SPACE</kbd><div><strong>LAUNCH & LAND</strong><p>Press to launch. Press again when<br><b>THRUST NOW</b> appears on descent.</p></div></div></div>
         <div class="mobile-guide"><div><span aria-hidden="true">← ↑ →</span><strong>LEFT THUMB</strong><small>Steering + thrust</small></div><div><span aria-hidden="true">▥ ▥</span><strong>RIGHT THUMB</strong><small>Brake + gas</small></div></div><p class="guide-tip">Keep the gas held while you tap thrust.<br><kbd>C</kbd> chase / cockpit camera · <kbd>R</kbd> recover · <kbd>Esc</kbd> pause.</p>
+        <label class="money-shots-setting"><input id="money-shots-enabled" type="checkbox" checked><span><strong>MONEY SHOTS</strong><small>Occasional slow-motion stunt cameras · C to skip</small></span></label>
         <button id="controls-start" class="primary-button">START RACE <span>↗</span></button><button id="controls-back" class="text-button">BACK</button>
       </div>
     </section>
     <section id="pause-panel" class="overlay center-panel hidden"><div class="dialog"><div class="eyebrow">TAKE A BREATHER</div><h2>YOUR ROAD.<br><em>YOUR PACE.</em></h2><p>The clock is paused. Pick up where you left off.</p><button id="resume" class="primary-button">KEEP DRIVING <span>↗</span></button><button id="restart" class="text-button">Restart the run</button><button id="change-track" class="text-button">Choose track / difficulty</button><div class="pause-controls">W / ↑ Accelerate · S / ↓ Brake<br>A / ← Left · D / → Right<br>Space: launch, then press again on descent<br>R Recover · M Driving sound · Esc Pause</div></div></section>
     <section id="finish" class="overlay center-panel hidden"><div class="dialog finish-dialog">
-      <div id="finish-track" class="eyebrow">CANYON CIRCUIT COMPLETE</div><h2>THAT WAS <em>A FLIGHT.</em></h2>
-      <div class="result-driver"><small>DRIVER</small><strong id="result-driver"></strong></div>
-      <div id="new-best" class="best-badge hidden">NEW PERSONAL BEST</div>
-      <div class="results"><div><small>FINAL SCORE</small><strong id="final-score"></strong></div><div><small>FINISH TIME</small><strong id="final-time"></strong></div><div><small>OBSTACLES CLEARED</small><strong id="final-clears"></strong></div><div><small>BEST TIME</small><strong id="best-time"></strong></div></div>
-      <div class="result-card-preview"><canvas id="result-card" width="1200" height="675" role="img" aria-label="Your Roadster race results card"></canvas></div>
-      <p id="finish-copy"></p>
-      <div class="share-actions"><a id="post-x" class="share-x" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">𝕏</span> POST TO X <span aria-hidden="true">↗</span></a><a id="save-card" class="save-card" download="roadster-result.png">SAVE X CARD <span aria-hidden="true">↓</span></a></div>
-      <p class="share-help" id="share-help">Save the card, then attach it to your X post. Your post opens for review.</p>
-      <button id="again" class="primary-button">ANOTHER RUN <span>↗</span></button><button id="change-driver" class="text-button">Choose track / difficulty / driver</button>
-      <a class="result-site-link" href="https://roadster.coolsoftware.io" target="_blank" rel="noopener noreferrer">roadster.coolsoftware.io <span aria-hidden="true">↗</span></a>
+      <header class="finish-heading"><div><div id="finish-track" class="eyebrow">CANYON CIRCUIT COMPLETE</div><h2>THAT WAS <em>A FLIGHT.</em></h2></div><div id="new-best" class="best-badge hidden">NEW PERSONAL BEST</div></header>
+      <div class="finish-layout">
+        <div class="finish-preview-panel"><div class="export-preview-tabs" aria-label="Result preview"><button id="preview-card" type="button" aria-pressed="true">RESULT CARD</button><button id="preview-gif" type="button" aria-pressed="false" disabled>MONEY SHOT</button></div><div class="result-card-preview"><canvas id="result-card" width="2400" height="1350" role="img" aria-label="Your Roadster race results card"></canvas><img id="gif-preview" class="hidden" alt="Your Roadster Money Shot replay"></div><p id="finish-copy"></p></div>
+        <aside class="finish-export-panel" aria-label="Save and share your result">
+          <div class="result-driver"><small>DRIVER</small><strong id="result-driver"></strong></div>
+          <div class="results"><div><small>FINAL SCORE</small><strong id="final-score"></strong></div><div><small>FINISH TIME</small><strong id="final-time"></strong></div><div><small>OBSTACLES CLEARED</small><strong id="final-clears"></strong></div><div><small>BEST TIME</small><strong id="best-time"></strong></div></div>
+          <div class="card-format-field"><label for="card-format">CARD FORMAT</label><select id="card-format"><option value="landscape">Wide · 16:9</option><option value="square">Square · 1:1</option></select><p id="card-file-info">High-resolution PNG</p></div>
+          <div class="card-export-actions"><a id="save-card" class="save-card" download="roadster-result.png" aria-disabled="true">DOWNLOAD PNG <span aria-hidden="true">↓</span></a><button id="copy-card" type="button" disabled>COPY IMAGE <span aria-hidden="true">▢</span></button><a id="post-x" class="share-x" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">𝕏</span> POST TO X <span aria-hidden="true">↗</span></a></div>
+          <p class="share-help" id="share-help" role="status" aria-live="polite">Preparing your card…</p><p class="card-share-note">Download or copy your card, then attach it to your X post.</p>
+          <div class="gif-export"><button id="make-gif" type="button" disabled>CREATE MONEY SHOT GIF <span aria-hidden="true">↗</span></button><a id="save-gif" class="hidden" download="roadster-money-shot.gif">DOWNLOAD GIF <span aria-hidden="true">↓</span></a><p id="gif-status" role="status" aria-live="polite">A GIF becomes available after a Money Shot is captured this run.</p></div>
+        </aside>
+      </div>
+      <div class="finish-footer"><button id="again" class="primary-button">ANOTHER RUN <span>↗</span></button><button id="change-driver" class="text-button">Choose track / difficulty / driver</button><a class="result-site-link" href="https://roadster.coolsoftware.io" target="_blank" rel="noopener noreferrer">roadster.coolsoftware.io <span aria-hidden="true">↗</span></a></div>
     </div></section>
     <section id="crash-panel" class="overlay center-panel hidden"><div class="dialog crash-dialog"><div id="crash-reason" class="eyebrow">LANDING THRUST MISSED</div><h2 id="crash-title">HARD<br><em>LANDING.</em></h2><p id="crash-description">Fire your thrusters while descending to slow the fall. Watch for THRUST NOW and tap Space again.</p><div class="crash-stats"><span>Your score is kept.</span><span>Return to the last checkpoint.</span></div><button id="retry" class="primary-button">RETRY CHECKPOINT <span>↗</span></button><button id="crash-restart" class="text-button">Restart the run</button><div class="pause-controls"><kbd>R</kbd> Retry · <kbd>SPACE</kbd> Landing thrust</div></div></section>
     <section id="error" class="overlay center-panel hidden"><div class="dialog"><h2>LET’S GET<br>YOU ROLLING.</h2><p id="error-text">Your browser could not start the 3D renderer. Enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary-button">TRY AGAIN <span>↗</span></button></div></section>
   </main>
+  <div id="money-shot-overlay" class="money-shot-overlay hidden" aria-hidden="true"><span>MONEY SHOT <b id="money-shot-angle"></b></span><small>C · BACK TO THE DRIVE</small></div>
   <div id="touch-controls" class="touch-controls hidden" role="group" aria-label="Driving controls"><div class="steer-buttons"><button data-control="left" aria-label="Steer left"><span aria-hidden="true">←</span><small>A / ←</small></button><button data-control="right" aria-label="Steer right"><span aria-hidden="true">→</span><small>D / →</small></button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing"><span aria-hidden="true">↑</span><strong>THRUST</strong><small>SPACE</small></button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake"><strong>BRAKE</strong><small>S / ↓</small></button><button data-control="gas" class="gas-button" aria-label="Accelerate"><strong>GAS</strong><small>W / ↑</small></button></div></div>
-  <script type="module" src="main.js?v=clean-hud-1"></script>
+  <script type="module" src="main.js?v=cards-2"></script>
 </body>
 </html>
