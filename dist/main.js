@@ -4,13 +4,14 @@ import {DrivingAudio} from './audio.js?v=drive-2';
 import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=radio-1';
 import {renderResultCard} from './result-card.js?v=radio-1';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
-import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster} from './visual-effects.js?v=flight-3';
+import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster,createGroundTexture} from './visual-effects.js?v=realism-1';
+import {loadDetailedRoadster} from './detailed-roadster.js?v=realism-1';
 
 import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=drive-2';
 import {setupRadio} from './radio-ui.js?v=radio-1';
 import {setupSoundControls} from './sound-ui.js?v=drive-2';
 import {TRACKS,getTrack} from './tracks.js?v=radio-1';
-import {installTrackScenery} from './track-scenery.js?v=radio-1';
+import {installTrackScenery} from './track-scenery.js?v=realism-1';
 const $=id=>document.getElementById(id);
 let rememberedTrack='canyon';try{rememberedTrack=localStorage.getItem('roadster-run-track')||'canyon';}catch{}
 const track=getTrack(new URLSearchParams(location.search).get('track')??rememberedTrack);
@@ -58,9 +59,9 @@ $('world').appendChild(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(track.theme.skyTop);scene.fog=new THREE.FogExp2(track.theme.fog,.00165);
 const camera=new THREE.PerspectiveCamera(57,innerWidth/innerHeight,.2,2200);
 scene.add(new THREE.HemisphereLight('#dbeaff',track.theme.hemisphereGround,1.65));
-installEnvironment(scene,renderer);
+installEnvironment(scene,renderer,track.theme);
 const sun=new THREE.DirectionalLight(track.theme.sunColor,track.theme.sunIntensity);sun.position.set(-150,180,90);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-70;sun.shadow.camera.right=70;sun.shadow.camera.top=90;sun.shadow.camera.bottom=-60;sun.shadow.camera.near=1;sun.shadow.camera.far=500;sun.shadow.normalBias=.15;sun.shadow.bias=-.0002;scene.add(sun,sun.target);
-const skyGeo=new THREE.SphereGeometry(1800,28,16);const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color(track.theme.skyTop)},bottom:{value:new THREE.Color(track.theme.skyBottom)}},vertexShader:'varying vec3 v; void main(){v=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec3 v; uniform vec3 top; uniform vec3 bottom; void main(){float f=pow(max(0.,normalize(v).y),.55);gl_FragColor=vec4(mix(bottom,top,f),1.);}'});const sky=new THREE.Mesh(skyGeo,skyMat);scene.add(sky);
+const skyGeo=new THREE.SphereGeometry(1800,28,16);const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color(track.theme.skyTop)},bottom:{value:new THREE.Color(track.theme.skyBottom)}},vertexShader:'varying vec3 v; void main(){v=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec3 v; uniform vec3 top; uniform vec3 bottom; void main(){float f=pow(max(0.,normalize(v).y),.55);gl_FragColor=vec4(mix(bottom,top,f),1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'});const sky=new THREE.Mesh(skyGeo,skyMat);scene.add(sky);
 const sunBall=new THREE.Mesh(new THREE.SphereGeometry(24,24,12),new THREE.MeshBasicMaterial({color:'#fff1cf'}));sunBall.position.set(-780,260,720);scene.add(sunBall);
 
 const controls=track.controls;
@@ -88,7 +89,7 @@ function ribbon(left,right,height,material,colored=false){
   const mesh=new THREE.Mesh(geo,material);mesh.receiveShadow=true;scene.add(mesh);return mesh;
 }
 const roadTexture=createAsphaltTexture(renderer);
-const asphalt=new THREE.MeshStandardMaterial({color:'#7c8589',map:roadTexture,bumpMap:roadTexture,bumpScale:.035,roughness:.94});
+const asphalt=new THREE.MeshStandardMaterial({color:'#9ca3a7',map:roadTexture,bumpMap:roadTexture,bumpScale:.018,roughness:.91});
 const curbMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1});
 const paintMat=new THREE.MeshStandardMaterial({color:'#e9ddbd',roughness:1});
 ribbon(-ROAD_WIDTH/2,ROAD_WIDTH/2,.02,asphalt);
@@ -109,7 +110,7 @@ for(let i=0;i<tp.count;i++){
   const natural=-14+Math.sin(x*.012)*8+Math.cos(z*.009)*9+Math.sin(x*.035+z*.025)*3;
   const blend=clamp((near.d-12)/43,0,1);tp.setY(i,lerp(near.y-.32,natural,blend));
   const grain=Math.sin(x*.026)*Math.cos(z*.023);const c=new THREE.Color().setHSL(track.theme.groundHue+grain*.008,track.theme.groundSaturation,track.theme.groundLightness+grain*.025+random()*.012);tc.push(c.r,c.g,c.b);
-}terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(tc,3));terrainGeo.computeVertexNormals();const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,flatShading:false}));terrain.receiveShadow=true;scene.add(terrain);
+}terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(tc,3));terrainGeo.computeVertexNormals();const groundTexture=createGroundTexture(renderer,track.id);const terrain=new THREE.Mesh(terrainGeo,new THREE.MeshStandardMaterial({vertexColors:true,map:groundTexture,bumpMap:groundTexture,bumpScale:.18,roughness:1,flatShading:false}));terrain.receiveShadow=true;scene.add(terrain);
 const strataCanvas=document.createElement('canvas');strataCanvas.width=128;strataCanvas.height=512;const strataCtx=strataCanvas.getContext('2d');strataCtx.fillStyle='#d6b497';strataCtx.fillRect(0,0,128,512);for(let y=0;y<512;y+=3){const a=.02+Math.random()*.10;strataCtx.fillStyle='rgba(67,34,17,'+a+')';strataCtx.fillRect(0,y,128,1+Math.random()*4);}const strataTexture=new THREE.CanvasTexture(strataCanvas);strataTexture.wrapS=strataTexture.wrapT=THREE.RepeatWrapping;strataTexture.colorSpace=THREE.SRGBColorSpace;
 const sandstone=[new THREE.MeshStandardMaterial({color:'#c49271',map:strataTexture,roughness:1,flatShading:true}),new THREE.MeshStandardMaterial({color:'#dfb58a',map:strataTexture,roughness:1,flatShading:true}),new THREE.MeshStandardMaterial({color:'#ad7c61',map:strataTexture,roughness:1,flatShading:true})];
 for(let i=0;i<(track.id==='canyon'?115:0);i++){
@@ -148,7 +149,30 @@ function roadster(){const car=new THREE.Group();const white=new THREE.MeshPhysic
   for(const x of [-.85,.85])for(const z of [-1.65,1.4]){const fire=new THREE.Mesh(new THREE.ConeGeometry(.16,1.8,8),new THREE.MeshBasicMaterial({color:'#b9eeff',transparent:true,opacity:.8,depthWrite:false,blending:THREE.AdditiveBlending}));fire.rotation.z=Math.PI;fire.position.set(x,-.65,z);car.add(fire);flames.push(fire);}
   return {car,wheels,flames};
 }
-const {car,wheels,flames}=roadster();enhanceRoadster(car,wheels);scene.add(car);
+const {car,wheels,flames}=roadster();enhanceRoadster(car,wheels);
+// Isolate the standard body so loading the detailed car never changes the
+// physics transform, crash visibility, or the existing thrust flame meshes.
+const standardBody=new THREE.Group();
+for(const part of [...car.children])if(!flames.includes(part))standardBody.add(part);
+car.add(standardBody);scene.add(car);
+let detailedCar=null;
+$('world').dataset.carModel='loading';
+loadDetailedRoadster(renderer).then(rig=>{
+  detailedCar=rig;car.add(rig.visual);standardBody.visible=false;
+  // Rear thrust outlets remain attached to the stable physics group.
+  for(const side of [-1,1]){
+    const nozzle=new THREE.Mesh(new THREE.CylinderGeometry(.14,.19,.24,20),alloy);
+    nozzle.rotation.x=Math.PI/2;nozzle.position.set(side*.65,.55,-2.58);car.add(nozzle);
+    const opening=new THREE.Mesh(new THREE.CircleGeometry(.12,20),black);
+    opening.rotation.y=Math.PI;opening.position.set(side*.65,.55,-2.705);car.add(opening);
+  }
+  for(let i=0;i<2;i++)flames[i].position.y=.55;
+  $('world').dataset.carModel='detailed';
+  $('world').setAttribute('aria-label','Three dimensional '+track.name+' racing track with a detailed Tesla Roadster');
+}).catch(error=>{
+  $('world').dataset.carModel='standard';
+  console.warn('Detailed Roadster could not load; using the standard car.',error);
+});
 const fx=createVisualEffects({scene,renderer});
 // Ground shadow remains level while the body rolls in the air.
 const shadowCanvas=document.createElement('canvas');shadowCanvas.width=64;shadowCanvas.height=64;const shctx=shadowCanvas.getContext('2d');const sg=shctx.createRadialGradient(32,32,0,32,32,30);sg.addColorStop(0,'rgba(0,0,0,.55)');sg.addColorStop(1,'rgba(0,0,0,0)');shctx.fillStyle=sg;shctx.fillRect(0,0,64,64);const shadow=new THREE.Mesh(new THREE.PlaneGeometry(4.8,7.8),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false}));shadow.rotation.x=-Math.PI/2;scene.add(shadow);
@@ -314,7 +338,8 @@ function animate(now){
   car.rotation.set(0,0,0);car.rotation.order='YXZ';car.rotation.y=f.yaw+steeringYaw;const rampUnder=run.jumpTime<0?run.ramps.find(r=>run.s>=r.s-r.length&&run.s<=r.s&&Math.abs(run.offset-r.offset)<r.width/2):null;
   const rampPitch=rampUnder?-Math.atan2(2*rampUnder.height*clamp((run.s-rampUnder.s+rampUnder.length)/rampUnder.length,0,1),rampUnder.length):0;
   car.rotation.x=-Math.atan2(f.t.y,Math.hypot(f.t.x,f.t.z))+(run.jumpTime>=0?-clamp(Math.atan2(run.verticalVelocity,Math.max(20,run.speed)),-.22,.3):rampPitch);car.rotation.z=run.roll-f.bank-clamp(run.lateralVelocity*.009,-.08,.08);
-  for(const w of wheels)w.rotation.x+=run.speed*dt/.56;
+  if(detailedCar)detailedCar.update(playing?dt:0,run.speed,steeringYaw,input.brake);
+  else for(const w of wheels)w.rotation.x+=(playing?dt:0)*run.speed/.56;
   for(let i=0;i<flames.length;i++){const active=thrustGlow>0;flames[i].visible=active||(preview&&i<2);if(flames[i].visible){flames[i].scale.setScalar((active?1:.2)*(1+Math.random()*.2));flames[i].material.opacity=active?.75:.4;}}
   shadow.position.copy(pointOn(visualS,preview?0:run.offset,.09));shadow.rotation.z=-f.yaw;shadow.material.opacity=clamp(1-run.height*.06,.18,1);shadow.scale.setScalar(1+run.height*.03);
   const forward=new THREE.Vector3(f.t.x,0,f.t.z).normalize();const target=pos.clone().addScaledVector(forward,preview?17:9);target.y=pointOn(visualS+18,run.offset,1.5).y;

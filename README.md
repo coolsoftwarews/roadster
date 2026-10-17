@@ -8,7 +8,15 @@ Controls: WASD / arrows drive, Space thrusts and rolls, R recovers to a checkpoi
 
 The arcade aero grip follows the track heading while the player controls lateral position and speed, including during jumps. Clear obstacles and land for 100 points each, once per obstacle. The timer has no deadline. Recovery preserves elapsed time and cleared obstacles; restarting resets the run. Personal bests stay in this browser using localStorage.
 
-Gameplay visuals and driving sounds are generated in the browser. This is a stylized playable interpretation of the concept artwork, not a vehicle simulation.
+The detailed Roadster model is bundled locally; scenery, visual effects and driving sounds are generated in the browser. This remains an arcade driving game with city-inspired scenery.
+
+## Detailed car and scenery
+
+The car uses **Tesla Roadster 2020 by metarex.4d**, licensed under CC BY 4.0. Credits, source and license links appear in `dist/credits.html` and `dist/assets/models/ATTRIBUTION.md`. Adaptations include optimized geometry/textures, silver paint, reflective glass, animated steering and rolling wheels, brake lights, and fictional thrusters. The original supplied download is not changed.
+
+Desktop loads a 7.48 MB model with the original painted body and main glass surfaces preserved. Touch devices, narrow screens and devices reporting 4 GB or less memory use a 5.47 MB version with conservative geometry reduction and smaller textures. Both retain full-precision normals. The previous procedural car remains available while loading or if the model cannot load. The asset recipes and validation reports are in `tools/model-optimization/`.
+
+Tracks include textured asphalt and terrain, detailed building facades, reflective windows, roof details, smoother trees, and animated coastal water. Existing course layouts, obstacles, steering, thrust timing and scoring are unchanged.
 
 ## Ramp flights and landing thrust
 

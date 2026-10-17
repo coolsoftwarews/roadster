@@ -1,42 +1,64 @@
 import * as THREE from './vendor/three.module.min.js';
 
-// All visual assets are generated locally. Particle buffers and skid marks are
+// These scenery textures and effects are generated locally. Particle buffers and skid marks are
 // fixed size, so repeated crashes and long runs cannot grow GPU memory usage.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const random=(a,b)=>a+Math.random()*(b-a);
 const TAU=Math.PI*2;
 
 export function createAsphaltTexture(renderer){
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
-  const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=512;
+  const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(512,512);
   let seed=14279;
+  const rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
   for(let i=0;i<pixels.data.length;i+=4){
-    seed=(Math.imul(seed,1664525)+1013904223)>>>0;
-    const grain=(seed/4294967296-.5)*34,bright=112+grain;
-    pixels.data[i]=bright;pixels.data[i+1]=bright+3;pixels.data[i+2]=bright+5;pixels.data[i+3]=255;
+    const grain=(rng()-.5)*28;
+    const bright=99+grain;
+    pixels.data[i]=bright;pixels.data[i+1]=bright+2;pixels.data[i+2]=bright+3;pixels.data[i+3]=255;
   }
   ctx.putImageData(pixels,0,0);
-  ctx.strokeStyle='rgba(26,32,34,.075)';ctx.lineWidth=1;
-  for(let i=0;i<45;i++){const y=(i*67)%256;ctx.beginPath();ctx.moveTo(0,y);ctx.bezierCurveTo(70,y-8,180,y+6,256,y);ctx.stroke();}
+  // Fine aggregate at a consistent metre scale. Broad cracks are avoided so
+  // tiling doesn't form an obvious grid.
+  for(let i=0;i<4200;i++){
+    const x=rng()*512,y=rng()*512,r=.35+rng()*.8;
+    ctx.fillStyle=i%3?'rgba(185,185,175,.12)':'rgba(18,24,27,.16)';
+    ctx.beginPath();ctx.ellipse(x,y,r,r*.65,rng()*3,0,TAU);ctx.fill();
+  }
   const texture=new THREE.CanvasTexture(canvas);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
   texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   // Supply UVs measured in metres / 4; the texture repeats every four metres.
   return texture;
 }
 
-export function installEnvironment(scene,renderer){
-  const studio=new THREE.Scene();studio.background=new THREE.Color('#9eafbb');
+export function createGroundTexture(renderer,trackId){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+  const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);let seed=5987;
+  const rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  for(let i=0;i<pixels.data.length;i+=4){const shade=224+rng()*28;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=shade;pixels.data[i+3]=255;}
+  ctx.putImageData(pixels,0,0);
+  const grassy=trackId==='austin'||trackId==='bay-area';
+  for(let i=0;i<1900;i++){
+    const x=rng()*256,y=rng()*256;ctx.strokeStyle=`rgba(55,64,47,${.04+rng()*.12})`;ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rng()*2-1,y+(grassy?2+rng()*4:rng()));ctx.stroke();
+  }
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(145,164);
+  texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return texture;
+}
+
+export function installEnvironment(scene,renderer,theme={}){
+  const studio=new THREE.Scene();studio.background=new THREE.Color(theme.skyTop||'#9eafbb');
   const shell=new THREE.Mesh(new THREE.SphereGeometry(70,24,16),new THREE.ShaderMaterial({
-    side:THREE.BackSide,uniforms:{},
+    side:THREE.BackSide,uniforms:{skyColor:{value:new THREE.Color(theme.skyTop||'#7cabbf')},horizonColor:{value:new THREE.Color(theme.skyBottom||'#f6d4ab')},groundColor:{value:new THREE.Color(theme.hemisphereGround||'#b48b64').multiplyScalar(.28)}},
     vertexShader:'varying vec3 dir;void main(){dir=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:'varying vec3 dir;void main(){float h=normalize(dir).y;vec3 sand=vec3(.23,.14,.08);vec3 horizon=vec3(.95,.81,.61);vec3 sky=vec3(.34,.55,.76);vec3 c=h>0.?mix(horizon,sky,pow(h,.55)):mix(horizon,sand,pow(-h,.2));gl_FragColor=vec4(c,1.);}'
+    fragmentShader:'varying vec3 dir;uniform vec3 skyColor;uniform vec3 horizonColor;uniform vec3 groundColor;void main(){float h=normalize(dir).y;vec3 c=h>0.?mix(horizonColor,skyColor,pow(h,.55)):mix(horizonColor,groundColor,pow(-h,.2));gl_FragColor=vec4(c,1.);}'
   }));studio.add(shell);
   const cards=[];
-  for(const [x,y,z,w,h,intensity]of [[-25,25,20,28,17,3.1],[27,13,-15,8,29,1.3],[0,38,-8,24,8,1.9]]){
+  for(const [x,y,z,w,h,intensity]of [[-25,25,20,38,20,2],[27,23,-15,28,15,.9],[0,38,-8,24,8,1.2]]){
     const card=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color('#f6e4d1').multiplyScalar(intensity),side:THREE.DoubleSide}));
     card.position.set(x,y,z);card.lookAt(0,0,0);studio.add(card);cards.push(card);
   }
-  const pmrem=new THREE.PMREMGenerator(renderer),target=pmrem.fromScene(studio,.08,1,100);
+  const pmrem=new THREE.PMREMGenerator(renderer),target=pmrem.fromScene(studio,.03,1,100);
   scene.environment=target.texture;
   studio.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});pmrem.dispose();
   return {dispose(){if(scene.environment===target.texture)scene.environment=null;target.dispose();}};

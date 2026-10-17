@@ -1,0 +1,928 @@
+{
+  "input": {
+    "file": "tesla_roadster_2020.glb",
+    "bytes": 40189748,
+    "triangles": 608850,
+    "nodeCount": 193,
+    "meshCount": 105,
+    "materialCount": 26,
+    "materials": [
+      "Rims",
+      "mirror",
+      "Metal_-_Black_rough",
+      "Brake_Disc",
+      "Thread",
+      "Sidewall",
+      "car_main_paint",
+      "grill",
+      "Glass_mid_tint",
+      "interior",
+      "seats",
+      "non_lustrous_metal",
+      "carbon_fibre",
+      "Glass_Amber",
+      "indicator_left",
+      "indicator_right",
+      "chrome",
+      "Glass_Clear",
+      "headlights_AHO",
+      "headlights_main",
+      "Glass_Tint_max",
+      "licence_plate_light",
+      "Glass_rear_lights_main",
+      "ior_1",
+      "Glass_rear_lights_DHO",
+      "calipers"
+    ],
+    "bounds": {
+      "min": [
+        -0.9285150597576406,
+        -0.011699692830840547,
+        -2.2446560419584025
+      ],
+      "max": [
+        0.9625699686429652,
+        1.16784567588712,
+        2.381565923361391
+      ]
+    },
+    "wheels": [
+      {
+        "name": "TR.DEF-Wheel.Ft.R",
+        "parent": "RootNode",
+        "translation": [
+          -83.80290222167969,
+          31.33312225341797,
+          153.4224090576172
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          -0.8380290034853886,
+          0.3133312155306811,
+          1.5342240562835912,
+          1
+        ],
+        "bounds": {
+          "min": [
+            -0.9127621026464823,
+            -0.011681591540809333,
+            1.2092109925294205
+          ],
+          "max": [
+            -0.6447534369359884,
+            0.6383442379442803,
+            1.8592385505491276
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Ft.R_Rims_0",
+          "TR.DEF-Wheel.Ft.R_mirror_0",
+          "TR.DEF-Wheel.Ft.R_Metal - Black rough_0",
+          "roadster.080",
+          "roadster.002"
+        ]
+      },
+      {
+        "name": "TR.DEF-Wheel.Ft.L",
+        "parent": "RootNode",
+        "translation": [
+          83.80286407470703,
+          31.33131217956543,
+          153.41763305664062
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          0.8380286220156705,
+          0.3133131147925603,
+          1.534176296274893,
+          1
+        ],
+        "bounds": {
+          "min": [
+            0.6447531448732355,
+            -0.011699692830840547,
+            1.20916144382171
+          ],
+          "max": [
+            0.912761683923862,
+            0.6383261377735824,
+            1.8591890029608353
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Ft.L_Rims_0",
+          "TR.DEF-Wheel.Ft.L_mirror_0",
+          "TR.DEF-Wheel.Ft.L_Metal - Black rough_0",
+          "roadster.072",
+          "roadster.001"
+        ]
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.L",
+        "parent": "RootNode",
+        "translation": [
+          87.42514038085938,
+          34.127052307128906,
+          -138.74058532714844
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          0.8742513842675521,
+          0.34127051544329845,
+          -1.387405822260547,
+          1
+        ],
+        "bounds": {
+          "min": [
+            0.6458408920651472,
+            -0.0029336173295338996,
+            -1.731611909605178
+          ],
+          "max": [
+            0.9625699686429652,
+            0.685474951278674,
+            -1.0432014634506568
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Bk.L_Rims_0",
+          "TR.DEF-Wheel.Bk.L_mirror_0",
+          "TR.DEF-Wheel.Bk.L_Metal - Black rough_0",
+          "roadster.074",
+          "roadster.003"
+        ]
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.R",
+        "parent": "RootNode",
+        "translation": [
+          -84.01964569091797,
+          34.10787582397461,
+          -138.7404022216797
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          -0.8401964381293254,
+          0.34107875061604176,
+          -1.3874039912059004,
+          1
+        ],
+        "bounds": {
+          "min": [
+            -0.9285150597576406,
+            -0.0031253815643613736,
+            -1.7316083494231127
+          ],
+          "max": [
+            -0.6117858565199553,
+            0.6852831858584184,
+            -1.0431979044541095
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Bk.R_Rims_0",
+          "TR.DEF-Wheel.Bk.R_mirror_0",
+          "TR.DEF-Wheel.Bk.R_Metal - Black rough_0",
+          "roadster.076",
+          "roadster.004"
+        ]
+      }
+    ],
+    "textures": [
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          1024,
+          1024
+        ],
+        "bytes": 248850
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          1024,
+          1024
+        ],
+        "bytes": 391298
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          2048,
+          2048
+        ],
+        "bytes": 708649
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          2048,
+          2048
+        ],
+        "bytes": 1427806
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          2048,
+          2048
+        ],
+        "bytes": 8678115
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          64,
+          64
+        ],
+        "bytes": 1360
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          64,
+          64
+        ],
+        "bytes": 2369
+      },
+      {
+        "name": "",
+        "mime": "image/jpeg",
+        "size": [
+          4096,
+          4096
+        ],
+        "bytes": 501298
+      },
+      {
+        "name": "",
+        "mime": "image/png",
+        "size": [
+          4096,
+          4096
+        ],
+        "bytes": 2294363
+      },
+      {
+        "name": "",
+        "mime": "image/jpeg",
+        "size": [
+          4096,
+          4096
+        ],
+        "bytes": 2194837
+      }
+    ],
+    "extensions": [
+      "KHR_materials_clearcoat",
+      "KHR_materials_emissive_strength",
+      "KHR_materials_specular",
+      "KHR_materials_transmission",
+      "KHR_texture_transform"
+    ],
+    "requiredExtensions": [],
+    "asset": {
+      "generator": "glTF-Transform v4.5.1",
+      "version": "2.0",
+      "extras": {
+        "author": "metarex.4d (https://sketchfab.com/metarex.4d)",
+        "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+        "source": "https://sketchfab.com/3d-models/tesla-roadster-2020-1fbf29e297bd4a17ac39a00a378441d8",
+        "title": "Tesla Roadster 2020",
+        "modifications": "Secondary geometry simplified, with conservative simplification of body/main glass capped at 0.03% relative error. Vertex attributes losslessly compressed with Meshopt, preserving full-precision authored normals and positions of retained vertices. Textures resized to at most 512px (paint flake map 512px) and converted to WebP. Original named hierarchy and materials retained."
+      }
+    },
+    "largestMeshes": [
+      {
+        "name": "TR.DEF-Body_car main paint_0",
+        "triangles": 118284
+      },
+      {
+        "name": "roadster.043_carbon fibre_0",
+        "triangles": 29168
+      },
+      {
+        "name": "TR.DEF-Wheel.Ft.R_Rims_0",
+        "triangles": 22176
+      },
+      {
+        "name": "TR.DEF-Wheel.Ft.L_Rims_0",
+        "triangles": 22176
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.L_Rims_0",
+        "triangles": 22176
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.R_Rims_0",
+        "triangles": 22176
+      },
+      {
+        "name": "roadster.050_Glass rear lights main_0",
+        "triangles": 20644
+      },
+      {
+        "name": "roadster.056_Glass Tint max_0",
+        "triangles": 17600
+      },
+      {
+        "name": "roadster.015_car main paint_0",
+        "triangles": 16940
+      },
+      {
+        "name": "roadster.008_interior_0",
+        "triangles": 16128
+      },
+      {
+        "name": "roadster.024_carbon fibre_0",
+        "triangles": 15872
+      },
+      {
+        "name": "roadster.009_seats_0",
+        "triangles": 14656
+      },
+      {
+        "name": "roadster.016_Metal - Black rough_0",
+        "triangles": 12928
+      },
+      {
+        "name": "roadster.053_Glass mid tint_0",
+        "triangles": 10240
+      },
+      {
+        "name": "roadster.037_Glass Clear_0",
+        "triangles": 9984
+      }
+    ]
+  },
+  "output": {
+    "file": "roadster-mobile.glb",
+    "bytes": 5471248,
+    "triangles": 180811,
+    "nodeCount": 193,
+    "meshCount": 105,
+    "materialCount": 26,
+    "materials": [
+      "Rims",
+      "mirror",
+      "Metal_-_Black_rough",
+      "Brake_Disc",
+      "Thread",
+      "Sidewall",
+      "car_main_paint",
+      "grill",
+      "Glass_mid_tint",
+      "interior",
+      "seats",
+      "non_lustrous_metal",
+      "carbon_fibre",
+      "Glass_Amber",
+      "indicator_left",
+      "indicator_right",
+      "chrome",
+      "Glass_Clear",
+      "headlights_AHO",
+      "headlights_main",
+      "Glass_Tint_max",
+      "licence_plate_light",
+      "Glass_rear_lights_main",
+      "ior_1",
+      "Glass_rear_lights_DHO",
+      "calipers"
+    ],
+    "bounds": {
+      "min": [
+        -0.9285150597576406,
+        -0.011344356977289749,
+        -2.244340613958699
+      ],
+      "max": [
+        0.9625699611923848,
+        1.16784567588712,
+        2.381565923361391
+      ]
+    },
+    "wheels": [
+      {
+        "name": "TR.DEF-Wheel.Ft.R",
+        "parent": "RootNode",
+        "translation": [
+          -83.80290222167969,
+          31.33312225341797,
+          153.4224090576172
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          -0.8380290034853886,
+          0.3133312155306811,
+          1.5342240562835912,
+          1
+        ],
+        "bounds": {
+          "min": [
+            -0.9127621026464823,
+            -0.011326261230587664,
+            1.2096992439657939
+          ],
+          "max": [
+            -0.6447534369359884,
+            0.6367429051303799,
+            1.8592385505491276
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Ft.R_Rims_0",
+          "TR.DEF-Wheel.Ft.R_mirror_0",
+          "TR.DEF-Wheel.Ft.R_Metal - Black rough_0",
+          "roadster.080",
+          "roadster.002"
+        ]
+      },
+      {
+        "name": "TR.DEF-Wheel.Ft.L",
+        "parent": "RootNode",
+        "translation": [
+          83.80286407470703,
+          31.33131217956543,
+          153.41763305664062
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          0.8380286220156705,
+          0.3133131147925603,
+          1.534176296274893,
+          1
+        ],
+        "bounds": {
+          "min": [
+            0.6447531448732355,
+            -0.011344356977289749,
+            1.20916144382171
+          ],
+          "max": [
+            0.9127616764732815,
+            0.6374835041610838,
+            1.858654083859117
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Ft.L_Rims_0",
+          "TR.DEF-Wheel.Ft.L_mirror_0",
+          "TR.DEF-Wheel.Ft.L_Metal - Black rough_0",
+          "roadster.072",
+          "roadster.001"
+        ]
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.L",
+        "parent": "RootNode",
+        "translation": [
+          87.42514038085938,
+          34.127052307128906,
+          -138.74058532714844
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          0.8742513842675521,
+          0.34127051544329845,
+          -1.387405822260547,
+          1
+        ],
+        "bounds": {
+          "min": [
+            0.6458408920651472,
+            -0.0025573004778296493,
+            -1.7310954651716233
+          ],
+          "max": [
+            0.9625699611923848,
+            0.684908233263393,
+            -1.045298298124352
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Bk.L_Rims_0",
+          "TR.DEF-Wheel.Bk.L_mirror_0",
+          "TR.DEF-Wheel.Bk.L_Metal - Black rough_0",
+          "roadster.074",
+          "roadster.003"
+        ]
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.R",
+        "parent": "RootNode",
+        "translation": [
+          -84.01964569091797,
+          34.10787582397461,
+          -138.7404022216797
+        ],
+        "rotation": [
+          -0.7071068387877038,
+          0,
+          0,
+          0.7071067235853866
+        ],
+        "scale": [
+          100,
+          100.00000000000001,
+          100.00000000000001
+        ],
+        "worldMatrix": [
+          0.9999999776482582,
+          0,
+          0,
+          0,
+          0,
+          -1.629206757502705e-7,
+          -0.9999999776482451,
+          0,
+          0,
+          0.9999999776482451,
+          -1.629206757502705e-7,
+          0,
+          -0.8401964381293254,
+          0.34107875061604176,
+          -1.3874039912059004,
+          1
+        ],
+        "bounds": {
+          "min": [
+            -0.9285150597576406,
+            -0.00274907058330931,
+            -1.7310418043527098
+          ],
+          "max": [
+            -0.6117858565199553,
+            0.6847668904374292,
+            -1.0437654031988286
+          ]
+        },
+        "children": [
+          "TR.DEF-Wheel.Bk.R_Rims_0",
+          "TR.DEF-Wheel.Bk.R_mirror_0",
+          "TR.DEF-Wheel.Bk.R_Metal - Black rough_0",
+          "roadster.076",
+          "roadster.004"
+        ]
+      }
+    ],
+    "textures": [
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 18470
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 178556
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 5510
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 125226
+      },
+      {
+        "name": "roadster-paint-flake-normal",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 443366
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          64,
+          64
+        ],
+        "bytes": 1228
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          64,
+          64
+        ],
+        "bytes": 1728
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 5390
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 21024
+      },
+      {
+        "name": "",
+        "mime": "image/webp",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 28938
+      }
+    ],
+    "extensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp",
+      "KHR_materials_clearcoat",
+      "KHR_materials_emissive_strength",
+      "KHR_materials_specular",
+      "KHR_materials_transmission",
+      "KHR_texture_transform"
+    ],
+    "requiredExtensions": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp"
+    ],
+    "asset": {
+      "generator": "glTF-Transform v4.5.1",
+      "version": "2.0",
+      "extras": {
+        "author": "metarex.4d (https://sketchfab.com/metarex.4d)",
+        "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+        "source": "https://sketchfab.com/3d-models/tesla-roadster-2020-1fbf29e297bd4a17ac39a00a378441d8",
+        "title": "Tesla Roadster 2020",
+        "modifications": "Secondary geometry simplified, with conservative simplification of body/main glass capped at 0.03% relative error. Vertex attributes losslessly compressed with Meshopt, preserving full-precision authored normals and positions of retained vertices. Textures resized to at most 512px (paint flake map 512px) and converted to WebP. Original named hierarchy and materials retained."
+      }
+    },
+    "largestMeshes": [
+      {
+        "name": "TR.DEF-Body_car main paint_0",
+        "triangles": 59141
+      },
+      {
+        "name": "roadster.050_Glass rear lights main_0",
+        "triangles": 20641
+      },
+      {
+        "name": "roadster.015_car main paint_0",
+        "triangles": 8470
+      },
+      {
+        "name": "roadster.053_Glass mid tint_0",
+        "triangles": 5120
+      },
+      {
+        "name": "roadster.056_Glass Tint max_0",
+        "triangles": 4399
+      },
+      {
+        "name": "roadster.054_Glass mid tint_0",
+        "triangles": 4256
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.R_Rims_0",
+        "triangles": 4206
+      },
+      {
+        "name": "TR.DEF-Wheel.Bk.L_Rims_0",
+        "triangles": 4202
+      },
+      {
+        "name": "TR.DEF-Wheel.Ft.L_Rims_0",
+        "triangles": 4152
+      },
+      {
+        "name": "TR.DEF-Wheel.Ft.R_Rims_0",
+        "triangles": 4138
+      },
+      {
+        "name": "roadster.082_car main paint_0",
+        "triangles": 3711
+      },
+      {
+        "name": "roadster.058_car main paint_0",
+        "triangles": 3007
+      },
+      {
+        "name": "roadster.043_carbon fibre_0",
+        "triangles": 2915
+      },
+      {
+        "name": "roadster.059_Glass mid tint_0",
+        "triangles": 2880
+      },
+      {
+        "name": "roadster.037_Glass Clear_0",
+        "triangles": 2496
+      }
+    ]
+  },
+  "settings": {
+    "profile": "mobile",
+    "ratio": 0.1,
+    "error": 0.005,
+    "preservedMaterials": [],
+    "mainSurfaces": {
+      "ratio": 0.5,
+      "error": 0.0003
+    },
+    "otherGlass": {
+      "ratio": 0.25,
+      "error": 0.0005
+    },
+    "geometryCompression": "lossless Meshopt, no quantization or filtering",
+    "textureMax": 512,
+    "paintNormalMax": 512,
+    "normalTextureCompression": "lossless WebP",
+    "otherTextureQuality": 85
+  }
+}

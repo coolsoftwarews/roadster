@@ -123,3 +123,5 @@ body:not(.playing) .topbar{top:0;left:0;right:0;padding:26px 40px 22px;backgroun
 
 /* Follow link replaces the home footer tagline. */
 .launch-home #intro-footer .follow-x{margin:0;padding:10px 12px;font-size:11px;letter-spacing:.2px}
+
+.model-credit{display:block;width:fit-content;margin-top:9px;color:#aab9c0;font-size:9px;line-height:1.5;text-underline-offset:3px}.model-credit:hover{color:#fff}.model-credit:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
