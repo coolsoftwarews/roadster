@@ -26,7 +26,7 @@
   <meta name="twitter:image" content="https://roadster.coolsoftware.io/assets/roadster-launch.png">
   <meta name="twitter:image:alt" content="A red Roadster hovering above a launch stage on glowing blue thrusters.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=model-loading-1">
+  <link rel="stylesheet" href="style.css?v=clean-hud-1">
   <script defer src="https://analytics-ops1.coolsoftware.io/script.js" data-website-id="8581cf0e-5736-4eef-ac55-14426630d248"></script>
 </head>
 <body>
@@ -78,7 +78,7 @@
       <div class="next-obstacle"><span class="small-label">UP AHEAD</span><strong id="next-type">CLEAR ROAD</strong><span id="next-distance"></span></div>
       <button id="recover-control" class="recover-control" aria-label="Recover to checkpoint" title="Recover · R"><span aria-hidden="true">↺</span><strong>RECOVER</strong><kbd>R</kbd></button>
       <div class="telemetry"><div class="speed"><strong id="speed">0</strong><span>KM/H</span></div><div class="grip"><span id="grip-dot"></span><span id="grip-label">AERO GRIP</span></div></div>
-      <div class="thruster"><div id="flight-panel" class="flight-panel hidden" role="status" aria-live="polite"><div class="flight-top"><span id="flight-kind">FLIGHT CONTROL</span><span><b id="altitude">0.0</b> M</span></div><strong id="flight-title">CLIMBING</strong><span id="flight-instruction">Wait for descent</span><div class="flight-meter"><i id="flight-meter-fill"></i></div></div><div class="thruster-title"><span>↑ THRUSTERS</span><strong id="thrust-label">READY</strong></div><div class="charge-track"><i id="charge-bar"></i></div><div class="thrust-hint"><kbd>SPACE</kbd><span id="thrust-hint">JUMP / LANDING THRUST</span></div></div>
+      <div id="landing-cue" class="landing-cue hidden" role="status" aria-live="polite">THRUST NOW</div>
       <aside class="route-map" aria-label="Circuit map and progress"><div class="map-heading"><span>YOUR ROUTE</span><strong id="map-progress">0%</strong></div><canvas id="minimap" width="240" height="200" aria-label="Track map, your position, ramps and finish"></canvas><div class="map-detail"><span id="map-distance">0.0 / 0.0 km</span><span>FINISH <b aria-hidden="true">⚑</b></span></div><div class="map-legend"><span><i class="map-you"></i> YOU</span><span><i class="map-ramp"></i> RAMP</span><span><i class="map-start"></i> START</span></div></aside>
     </section>
     <section id="controls-panel" class="overlay center-panel controls-panel hidden" role="dialog" aria-modal="true" aria-labelledby="controls-title" aria-describedby="controls-summary">
@@ -105,6 +105,6 @@
     <section id="error" class="overlay center-panel hidden"><div class="dialog"><h2>LET’S GET<br>YOU ROLLING.</h2><p id="error-text">Your browser could not start the 3D renderer. Enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary-button">TRY AGAIN <span>↗</span></button></div></section>
   </main>
   <div id="touch-controls" class="touch-controls hidden" role="group" aria-label="Driving controls"><div class="steer-buttons"><button data-control="left" aria-label="Steer left"><span aria-hidden="true">←</span><small>A / ←</small></button><button data-control="right" aria-label="Steer right"><span aria-hidden="true">→</span><small>D / →</small></button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing"><span aria-hidden="true">↑</span><strong>THRUST</strong><small>SPACE</small></button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake"><strong>BRAKE</strong><small>S / ↓</small></button><button data-control="gas" class="gas-button" aria-label="Accelerate"><strong>GAS</strong><small>W / ↑</small></button></div></div>
-  <script type="module" src="main.js?v=model-loading-1"></script>
+  <script type="module" src="main.js?v=clean-hud-1"></script>
 </body>
 </html>

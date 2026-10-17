@@ -181,7 +181,8 @@ body:not(.playing) #pause{display:none}
 .guide-thrust>kbd{width:70px;min-height:49px;font-size:11px;letter-spacing:1px;color:#1a2730;background:var(--accent);border:0;font-weight:800;flex-shrink:0}
 .mobile-guide{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.mobile-guide>div{display:grid;grid-template-columns:43px 1fr;gap:4px 10px;padding:12px;background:#ffffff05;border:1px solid #ffffff16;border-radius:5px}.mobile-guide span{grid-row:1/3;align-self:center;color:#ffaf88;font-size:19px;letter-spacing:-2px;text-align:center}.mobile-guide strong{font-size:8px;letter-spacing:1px}.mobile-guide small{font-size:10px;color:#b9ccd1}.controls-dialog .guide-tip{font-size:10px;line-height:1.7;margin:14px 0 0;color:#bfccd0}.guide-tip kbd{font-size:9px;min-height:18px;min-width:18px;padding:0 3px}
 .controls-dialog .primary-button{min-height:57px;margin-top:22px}.controls-dialog .text-button{font-size:10px;padding:15px 10px 0;min-height:35px;letter-spacing:1px}
-.touch-controls:not(.hidden){display:flex}.touch-controls{left:50%;right:auto;bottom:max(20px,env(safe-area-inset-bottom));width:min(630px,calc(100vw - 44px));transform:translateX(-50%);gap:18px;align-items:flex-end;z-index:5}
+.touch-controls:not(.hidden){display:none}.touch-controls{left:50%;right:auto;bottom:max(20px,env(safe-area-inset-bottom));width:min(630px,calc(100vw - 44px));transform:translateX(-50%);gap:18px;align-items:flex-end;z-index:5}
+@media(pointer:coarse){.touch-controls:not(.hidden){display:flex}}
 .touch-controls>div{display:flex;gap:8px;align-items:flex-end}.touch-controls button{min-width:68px;height:66px;border-radius:9px;font-size:29px;border-color:#ffffff62;background:#0e2130df;box-shadow:0 4px 20px #0002;-webkit-tap-highlight-color:transparent;transition:background .12s,box-shadow .12s}
 .touch-controls button>span,.touch-controls button>strong{display:block;line-height:1}.touch-controls button>small{display:block;font-size:8px;line-height:1.4;letter-spacing:.6px;margin-top:8px;color:#c8d8dc;font-weight:400}
 .touch-controls .touch-thrust{height:80px;min-width:92px;width:92px;border:1px solid #ffbe94;background:#ff8055;color:#16242e;border-radius:10px;box-shadow:0 3px 18px #ff6b4326}
@@ -271,3 +272,8 @@ body:not(.playing) #camera-toggle{display:none}
 .primary-button:disabled,.primary-button:disabled:hover{cursor:wait;background:#65727a;color:#d5e0e2;opacity:.65;transform:none}
 @media(max-width:580px){.model-load-status{padding:18px}.model-load-mark{font-size:31px;margin-bottom:14px}.model-load-status h3{font-size:9px;letter-spacing:1.5px}.model-load-status p{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.model-load-status progress::-webkit-progress-value{transition:none}}
+
+/* Landing timing stays readable without covering the car with progress cards. */
+.landing-cue{position:absolute;left:50%;bottom:max(34px,env(safe-area-inset-bottom));transform:translateX(-50%);color:#ffe0a3;font-size:16px;font-weight:800;letter-spacing:2px;white-space:nowrap;text-shadow:0 2px 5px #000,0 0 12px #000;pointer-events:none}
+@media(pointer:coarse){.landing-cue{bottom:175px;font-size:14px;letter-spacing:1.5px}}
+@media(pointer:fine){.telemetry{left:32px;right:auto;bottom:32px}.grip{justify-content:flex-start}.speed{justify-content:flex-start}}

@@ -329,7 +329,7 @@ function showResults(result,isBest=false){
 }
 function changeDriver(){
   clearInput();run.reset();fx.reset();car.visible=true;shadow.visible=true;cameraInitialized=false;crashDelay=-1;thrustGlow=0;
-  for(const id of ['finish','pause-panel','crash-panel','hud','touch-controls','flight-panel'])$(id).classList.add('hidden');
+  for(const id of ['finish','pause-panel','crash-panel','hud','touch-controls','landing-cue'])$(id).classList.add('hidden');
   $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');document.body.classList.remove('playing','in-flight');$('intro').scrollTop=0;driverField.focus({preventScroll:true});
 }
 $('change-driver').addEventListener('click',changeDriver);$('change-track').addEventListener('click',changeDriver);
@@ -486,16 +486,13 @@ function animate(now){
   if(crashDelay>=0){crashDelay-=dt;if(crashDelay<0&&run.state==='crashed'){$('crash-panel').classList.remove('hidden');$('retry').focus();}}
   if(run.landingWindow&&!landingCuePlayed){audio.warning();landingCuePlayed=true;}
   $('speed-lines').style.opacity=run.state==='running'?clamp((run.speed-40)/45,0,.45):0;
-  const inFlight=run.jumpTime>=0&&run.state!=='crashed';document.body.classList.toggle('in-flight',inFlight);$('flight-panel').classList.toggle('hidden',!inFlight);
+  const inFlight=run.jumpTime>=0&&run.state!=='crashed';document.body.classList.toggle('in-flight',inFlight);
+  $('landing-cue').classList.toggle('hidden',!(run.state==='running'&&inFlight&&run.landingWindow&&!run.landingArmed));
   $('touch-thrust').classList.toggle('urgent',inFlight&&run.landingWindow);$('touch-thrust').classList.toggle('safe',inFlight&&run.landingArmed);
   $('touch-thrust').querySelector('strong').textContent=inFlight&&run.landingArmed?'SAFE':inFlight&&run.landingWindow?'LAND NOW':'THRUST';
-  if(inFlight){$('flight-panel').classList.toggle('urgent',run.landingWindow);$('flight-panel').classList.toggle('safe',run.landingArmed);$('flight-title').textContent=run.landingArmed?'LANDING SAFE':run.landingWindow?'THRUST NOW':run.verticalVelocity<0?'DESCENDING':'CLIMBING';$('flight-instruction').textContent=run.landingArmed?'Hold your line':run.landingWindow?'SPACE · LAND NOW':run.verticalVelocity<0?'Wait for THRUST NOW':'Wait for descent';$('flight-kind').textContent=run.flightKind==='ramp'?'RAMP':'FLIGHT';$('altitude').textContent=run.height.toFixed(1);$('flight-meter-fill').style.width=(run.landingArmed?100:run.flightProgress*100)+'%';}
   if(renderFrames++%3===0){
     $('score').textContent=String(run.score).padStart(4,'0');$('timer').textContent=formatTime(run.time);$('speed').textContent=Math.round(run.speed*3.6);$('cleared').textContent=run.cleared;
-    $('charge-bar').style.width=run.charge*100+'%';
-    $('thrust-label').textContent=run.jumpTime>=0?(run.landingArmed?'LANDING SAFE':run.landingWindow?'FIRE NOW':'RESERVE READY'):run.charge>=.999?'READY':`${Math.ceil((1-run.charge)*run.difficulty.rechargeTime*10)/10}s`;
     $('grip-label').textContent=run.jumpTime>=0?'FLIGHT CONTROL':Math.abs(run.offset)>9?'LOOSE SURFACE':corner>.55?'MAX GRIP ACTIVE':'AERO GRIP';$('grip-dot').style.background=run.jumpTime>=0?'#9bdcf0':Math.abs(run.offset)>9?'#ff9d70':'#93e5c7';
-    $('thrust-hint').textContent=run.jumpTime>=0?'PRESS AGAIN TO LAND':'JUMP / LANDING THRUST';
     const next=run.nextObstacle(),nextRamp=run.nextRamp();
     const rampDistance=nextRamp?Math.max(0,nextRamp.s-nextRamp.length-run.s):Infinity;
     const rampNext=nextRamp&&(!next||rampDistance<next.s-run.s);
