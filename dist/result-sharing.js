@@ -78,7 +78,10 @@ export function normalizeResult(value){
   return {
     trackId,difficultyId,driver:displayDriver(value.driver),score:value.score,time:value.time,
     cleared:value.cleared,total:value.total,ramps:value.ramps,
-    totalRamps:value.totalRamps,successfulJumps:value.successfulJumps
+    totalRamps:value.totalRamps,successfulJumps:value.successfulJumps,
+    ...(typeof value.isBest==='boolean'?{isBest:value.isBest}:{}),
+    ...(typeof value.isScoreBest==='boolean'?{isScoreBest:value.isScoreBest}:{}),
+    ...(typeof value.previousBestTime==='number'&&Number.isFinite(value.previousBestTime)&&value.previousBestTime>=0?{previousBestTime:value.previousBestTime}:{})
   };
 }
 export function loadResult(storage){

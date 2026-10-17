@@ -84,6 +84,20 @@ test('legacy results belong to Canyon and unknown track IDs are rejected',()=>{
   }
 });
 
+test('optional personal-best metadata survives save and load while malformed metadata is ignored',()=>{
+  const storage=memoryStorage();
+  for(const isBest of [true,false])for(const isScoreBest of [true,false]){
+    const snapshot={...result,isBest,isScoreBest,previousBestTime:105.2};
+    assert.equal(saveResult(snapshot,storage),true);
+    assert.deepEqual(loadResult(storage),snapshot);
+  }
+  for(const previousBestTime of [Infinity,NaN,-1,'105.2',null]){
+    assert.deepEqual(normalizeResult({...result,isBest:'yes',isScoreBest:1,previousBestTime}),result);
+  }
+  assert.deepEqual(normalizeResult({...result,previousBestTime:0}),{...result,previousBestTime:0});
+  assert.deepEqual(normalizeResult(result),result);
+});
+
 test('records stay isolated by track and preserve the best score and time independently',()=>{
   const storage=memoryStorage();
   assert.equal(saveBest('austin',{time:130.5,score:1600},'easy',storage),true);
@@ -189,12 +203,12 @@ test('both social formats identify every completed track and difficulty, preserv
     assert.ok(values.includes(track.name.toUpperCase()));
     assert.ok(values.some(value=>value.includes(difficulty.name.toUpperCase())));
     const driverStart=values.indexOf('DRIVER')+1;
-    const driverEnd=values.indexOf('YOUR NEXT RECORD AWAITS.');
-    const driverRows=text.slice(driverStart,driverEnd);
+    const driverEnd=values.indexOf('TOTAL SCORE');
+    const driverRows=text.slice(driverStart,driverEnd).filter(row=>row.x=== (format==='square'?36:48));
     assert.equal(driverRows.map(row=>row.value).join(''),snapshot.driver);
     assert.ok(driverRows.every(row=>row.x+row.width<=canvas.width/2-36 && row.y+row.size<=canvas.height/2-45));
     assert.ok(values.includes('roadster.coolsoftware.io'));
-    for(const label of ['TOTAL SCORE','FINISH TIME','OBSTACLES CLEARED','RAMPS LANDED','SAFE LANDINGS'])assert.ok(values.includes(label));
+    for(const label of ['TOTAL SCORE','FINISH TIME','OBSTACLES JUMPED','RAMP LANDINGS','ALL SAFE LANDINGS','Unique ramps completed','Ramp + thrust jumps'])assert.ok(values.includes(label));
     assert.ok(values.includes('750'));
     assert.ok(values.includes('01:38.3'));
   }
@@ -238,6 +252,25 @@ test('card values stay finite and an unknown format uses the wide export',()=>{
   assert.equal(canvas.width,2400);assert.equal(canvas.height,1350);
   assert.ok(text.every(item=>!/(NaN|Infinity|undefined)/.test(item.value)));
   assert.ok(text.every(item=>Number.isFinite(item.size)&&Number.isFinite(item.x)&&Number.isFinite(item.y)));
+});
+
+test('personal best belongs beside the finish time without duplicating the record',()=>{
+  for (const format of Object.keys(CARD_FORMATS)) {
+    const {context,text}=cardContext();
+    renderResultCard({getContext:()=>context},{...result,isBest:true,previousBestTime:105.2},{format});
+    const time=text.find(item=>item.value==='FINISH TIME');
+    const badge=text.find(item=>item.value==='NEW PERSONAL BEST');
+    const previous=text.find(item=>item.value==='Previous best 01:45.2');
+    assert.ok(badge.y>time.y && badge.y<time.y+115);
+    assert.ok(Math.abs(badge.x-time.x)<12);
+    assert.ok(previous.y>badge.y);
+    const metrics=text.find(item=>item.value==='OBSTACLES JUMPED');
+    assert.ok(previous.y+previous.size<metrics.y);
+    const noBest=cardContext();
+    renderResultCard({getContext:()=>noBest.context},{...result,previousBestTime:90},{format});
+    assert.ok(!noBest.text.some(item=>item.value==='NEW PERSONAL BEST'));
+    assert.ok(noBest.text.some(item=>item.value==='Personal best 01:30.0'));
+  }
 });
 
  test('result and post clocks round across minute boundaries consistently',()=>{const result={driver:'Driver',score:150,time:59.99,cleared:0,total:18,ramps:1,totalRamps:5,successfulJumps:1};assert.match(buildShareText(result),/01:00\.0/);assert.doesNotMatch(buildShareText(result),/00:60/);});

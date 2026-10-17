@@ -4,7 +4,7 @@ import { getDifficulty } from './difficulty.js?v=radio-1';
 
 const FONT = 'Arial, Helvetica, sans-serif';
 const INK = '#fff5e7';
-const MUTED = '#a9bdc9';
+const MUTED = '#bdcdd6';
 const BACKGROUND = '#09111a';
 
 export const CARD_FORMATS = Object.freeze({
@@ -41,8 +41,8 @@ export function wrapCardText(context, text, width) {
 }
 
 /** Find a legible size for every character; no clipping or ellipsis. */
-export function layoutCardDriver(context, driver, width = 1040, height = 126) {
-  let size = 36;
+export function layoutCardDriver(context, driver, width = 1040, height = 126, startingSize = 36) {
+  let size = startingSize;
   let lines;
   do {
     context.font = `600 ${size}px ${FONT}`;
@@ -178,36 +178,50 @@ function drawArtwork(context, artwork, track, box) {
 const safeNumber = value => Number.isFinite(Number(value)) ? Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Number(value))) : 0;
 const count = value => Math.floor(safeNumber(value));
 
-function drawMetrics(context, result, x, y, width, labelSize = 12, valueSize = 29) {
+function drawMetrics(context, result, x, y, width, labelSize = 15, valueSize = 32) {
   const metrics = [
-    ['OBSTACLES CLEARED', `${count(result.cleared)} / ${count(result.total)}`],
-    ['RAMPS LANDED', `${count(result.ramps)} / ${count(result.totalRamps)}`],
-    ['SAFE LANDINGS', String(count(result.successfulJumps))]
+    ['OBSTACLES JUMPED', `${count(result.cleared)} / ${count(result.total)}`, 'Scoring jumps over hazards'],
+    ['RAMP LANDINGS', `${count(result.ramps)} / ${count(result.totalRamps)}`, 'Unique ramps completed'],
+    ['ALL SAFE LANDINGS', String(count(result.successfulJumps)), 'Ramp + thrust jumps']
   ];
   const column = width / metrics.length;
-  metrics.forEach(([title, value], index) => {
+  metrics.forEach(([title, value, explanation], index) => {
     const metricX = x + column * index;
-    if (index) line(context, metricX - 16, y, metricX - 16, y + 53, '#b4d1de2a');
+    if (index) line(context, metricX - 16, y, metricX - 16, y + 82, '#b4d1de2a');
     text(context, title, metricX, y, labelSize, MUTED, 700);
-    fittedText(context, value, metricX, y + 23, column - 34, valueSize, INK, 600);
+    fittedText(context, value, metricX, y + 27, column - 34, valueSize, INK, 600);
+    fittedText(context, explanation, metricX, y + 70, column - 30, labelSize - 1, MUTED, 500);
   });
 }
 
-function drawDriver(context, result, x, y, width, height, accent) {
-  roundRect(context, x, y, width, height, 10, '#ffffff06');
-  context.fillStyle = accent;
-  context.fillRect(x, y + 18, 3, height - 36);
-  text(context, 'DRIVER', x + 22, y + 16, 11, accent, 700);
+function drawDriver(context, result, x, y, width, height, accent, startingSize = 30) {
+  text(context, 'DRIVER', x, y, 14, accent, 700);
   const driver = String(result.driver ?? '') || 'Anonymous driver';
-  const layout = layoutCardDriver(context, driver, width - 44, height - 42);
+  const layout = layoutCardDriver(context, driver, width, height, startingSize);
   context.font = `600 ${layout.size}px ${FONT}`;
   context.fillStyle = INK;
-  layout.lines.forEach((row, index) => context.fillText(row, x + 22, y + 36 + index * layout.lineHeight));
+  layout.lines.forEach((row, index) => context.fillText(row, x, y + 23 + index * layout.lineHeight));
+  return y + 23 + layout.lines.length * layout.lineHeight;
+}
+
+function drawTime(context, result, x, y, width, accent, size = 48) {
+  text(context, 'FINISH TIME', x, y, 15, MUTED, 700);
+  fittedText(context, formatTime(safeNumber(result.time)), x - 2, y + 25, width, size, INK, 500);
+  let nextY = y + 29 + size;
+  if (result.isBest) {
+    roundRect(context, x - 3, nextY, width, 26, 5, accent);
+    fittedText(context, 'NEW PERSONAL BEST', x + 6, nextY + 6, width - 18, 13, BACKGROUND, 800);
+    nextY += 35;
+  }
+  if (Number.isFinite(result.previousBestTime) && result.previousBestTime > 0) {
+    const prefix = result.isBest ? 'Previous best' : 'Personal best';
+    fittedText(context, `${prefix} ${formatTime(result.previousBestTime)}`, x, nextY, width, 14, MUTED, 500);
+  }
 }
 
 function drawFooter(context, width, y, margin, accent, square) {
   line(context, margin, y - 18, width - margin, y - 18, '#b4d1de24');
-  text(context, 'YOUR NEXT RECORD AWAITS.', margin, y + 2, square ? 11 : 12, MUTED, 700);
+  text(context, 'YOUR NEXT RECORD AWAITS.', margin, y + 2, square ? 12 : 14, MUTED, 700);
   context.textAlign = 'right';
   text(context, 'roadster.coolsoftware.io', width - margin, y - 2, square ? 19 : 22, accent, 700);
   context.textAlign = 'left';
@@ -222,16 +236,16 @@ function paintWide(context, result, track, difficulty, artwork) {
   line(context, 48, 91, 1152, 91, '#b4d1de24');
 
   fittedText(context, track.name.toUpperCase(), 48, 120, 540, 39, INK, 800);
-  text(context, 'CIRCUIT COMPLETE', 48, 173, 13, accent, 700);
-  drawArtwork(context, artwork, track, { x: 600, y: 122, width: 552, height: 255 });
+  text(context, 'CIRCUIT COMPLETE', 48, 173, 15, accent, 700);
+  const driverEnd = drawDriver(context, result, 48, 212, 540, 84, accent);
+  drawArtwork(context, artwork, track, { x: 620, y: 122, width: 532, height: 353 });
 
-  text(context, 'TOTAL SCORE', 48, 227, 13, MUTED, 700);
-  fittedText(context, count(result.score).toLocaleString('en-US'), 40, 246, 312, 123, INK, 800);
-  text(context, 'FINISH TIME', 374, 250, 13, MUTED, 700);
-  fittedText(context, formatTime(safeNumber(result.time)), 369, 278, 216, 49, INK, 500);
-  line(context, 48, 389, 1152, 389, '#b4d1de18');
-  drawMetrics(context, result, 48, 418, 1104, 13, 34);
-  drawDriver(context, result, 48, 510, 1104, 97, accent);
+  const scoreY = Math.max(296, driverEnd + 20);
+  text(context, 'TOTAL SCORE', 48, scoreY, 15, MUTED, 700);
+  fittedText(context, count(result.score).toLocaleString('en-US'), 40, scoreY + 22, 312, 107, INK, 800);
+  drawTime(context, result, 374, scoreY + 5, 216, accent, 48);
+  line(context, 48, 496, 1152, 496, '#b4d1de24');
+  drawMetrics(context, result, 48, 518, 1104, 16, 36);
   drawFooter(context, 1200, 643, 48, accent, false);
 }
 
@@ -244,16 +258,17 @@ function paintSquare(context, result, track, difficulty, artwork) {
   context.textAlign = 'left';
   line(context, 36, 81, 764, 81, '#b4d1de24');
   fittedText(context, track.name.toUpperCase(), 36, 105, 728, 38, INK, 800);
-  text(context, `${difficulty.toUpperCase()}  /  CIRCUIT COMPLETE`, 36, 155, 13, accent, 700);
-  drawArtwork(context, artwork, track, { x: 110, y: 183, width: 654, height: 261 });
-  drawRoute(context, track, 39, 231, 52, 118, accent, 2.5);
+  text(context, `${difficulty.toUpperCase()}  /  CIRCUIT COMPLETE`, 36, 155, 14, accent, 700);
+  const driverEnd = drawDriver(context, result, 36, 190, 728, 76, accent, 28);
+  const artY = driverEnd + 15;
+  drawArtwork(context, artwork, track, { x: 110, y: artY, width: 654, height: 431 - artY });
+  drawRoute(context, track, 39, artY + 10, 52, 431 - artY - 20, accent, 2.5);
 
-  text(context, 'TOTAL SCORE', 36, 456, 13, MUTED, 700);
+  text(context, 'TOTAL SCORE', 36, 456, 15, MUTED, 700);
   fittedText(context, count(result.score).toLocaleString('en-US'), 30, 475, 385, 88, INK, 800);
-  text(context, 'FINISH TIME', 468, 463, 13, MUTED, 700);
-  fittedText(context, formatTime(safeNumber(result.time)), 464, 488, 300, 58, INK, 500);
-  drawMetrics(context, result, 36, 582, 728, 11, 28);
-  drawDriver(context, result, 36, 650, 728, 93, accent);
+  drawTime(context, result, 468, 456, 296, accent, 52);
+  line(context, 36, 609, 764, 609, '#b4d1de24');
+  drawMetrics(context, result, 36, 633, 728, 14, 32);
   drawFooter(context, 800, 778, 36, accent, true);
 }
 

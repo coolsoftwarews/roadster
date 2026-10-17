@@ -1,8 +1,9 @@
 import * as THREE from './vendor/three.module.min.js';
 import {Run,ROAD_WIDTH,JUMP_DURATION,RECHARGE_TIME,clamp,lerp,formatTime} from './game-logic.js?v=drive-2';
 import {DrivingAudio} from './audio.js?v=drive-2';
-import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=cinematic-1';
-import {createCardExporter} from './card-export.js?v=cards-2';
+import {loadBest,saveBest,loadDriver,saveDriver,normalizeDriver,displayDriver,loadResult,saveResult,buildXIntent} from './result-sharing.js?v=ui-review-1';
+import {createCardExporter} from './card-export.js?v=ui-review-1';
+import {CONTROL_BINDINGS,DRIVING_KEYS,actionForKey,createGuidePreference,crashPresentation} from './ui-controls.js?v=ui-review-1';
 import {MoneyShotDirector,shotCameraPose} from './money-shots.js?v=money-1';
 import {createMoneyShotRecorder} from './money-shot-gif.js?v=money-1';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
@@ -17,6 +18,21 @@ import {installTrackScenery} from './track-scenery.js?v=cinematic-1';
 import {WEATHER_OPTIONS,normalizeWeather,resolveWeather,createWeather} from './weather.js?v=cinematic-1';
 import {createCockpit} from './cockpit.js?v=cinematic-1';
 const $=id=>document.getElementById(id);
+let keyboardNavigation=false;
+window.addEventListener('pointerdown',()=>{keyboardNavigation=false;},true);
+window.addEventListener('keydown',()=>{keyboardNavigation=true;},true);
+function focusPanel(panel,action){
+  const target=keyboardNavigation?$(action):$(panel).querySelector('.dialog');
+  target?.focus({preventScroll:true});
+}
+for(const list of document.querySelectorAll('[data-control-list]')){
+  for(const binding of CONTROL_BINDINGS){
+    const row=document.createElement('div');row.className='control-binding';
+    const keys=document.createElement('span');keys.className='control-keys';
+    for(const label of binding.keys){const key=document.createElement('kbd');key.textContent=label;keys.append(key);}
+    const label=document.createElement('span');label.textContent=binding.label;row.append(keys,label);list.append(row);
+  }
+}
 let rememberedTrack='canyon';try{rememberedTrack=localStorage.getItem('roadster-run-track')||'canyon';}catch{}
 const track=getTrack(new URLSearchParams(location.search).get('track')??rememberedTrack);
 try{localStorage.setItem('roadster-run-track',track.id);}catch{}
@@ -300,7 +316,7 @@ function renderCameraToggle(){
   $('camera-label').textContent=seated?'COCKPIT':'CHASE';
   document.body.dataset.camera=cameraMode;
 }
-function toggleCamera(){if(moneyShots.active){moneyShots.stop();return;}cameraMode=cameraMode==='chase'?'cockpit':'chase';cameraInitialized=false;try{localStorage.setItem('roadster-run-camera',cameraMode);}catch{}renderCameraToggle();}
+function toggleCamera(){moneyShots.stop();cameraMode=cameraMode==='chase'?'cockpit':'chase';cameraInitialized=false;try{localStorage.setItem('roadster-run-camera',cameraMode);}catch{}renderCameraToggle();}
 $('camera-toggle').addEventListener('click',toggleCamera);renderCameraToggle();
 $('track-distance').textContent=(length/1000).toFixed(1);$('obstacle-count').textContent=run.obstacles.length;$('total').textContent=run.obstacles.length;
 const map=$('minimap'),mapctx=map.getContext('2d');const bounds={minX:Math.min(...samples.map(p=>p.x)),maxX:Math.max(...samples.map(p=>p.x)),minZ:Math.min(...samples.map(p=>p.z)),maxZ:Math.max(...samples.map(p=>p.z))};const scale=Math.min(205/(bounds.maxX-bounds.minX),168/(bounds.maxZ-bounds.minZ));
@@ -326,7 +342,7 @@ let runDriver=displayDriver(driverField.value),lastResult=loadResult();
 function updateDriver(){const value=normalizeDriver(driverField.value);if(driverField.value!==value)driverField.value=value;$('driver-count').textContent=value.length+' / 255';const saved=saveDriver(value);$('driver-save-status').textContent=saved?'Saved in this browser · shown on your results and card':'Used for this race · browser storage is unavailable';}
 driverField.addEventListener('input',updateDriver);driverField.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('start').click();}});updateDriver();
 function readBest(trackId=track.id,difficultyId=difficulty.id){return loadBest(trackId,difficultyId);}
-const cardExporter=createCardExporter({canvas:$('result-card'),downloadLink:$('save-card'),copyButton:$('copy-card'),formatSelect:$('card-format'),status:$('share-help'),metadata:$('card-file-info')});
+const cardExporter=createCardExporter({canvas:$('result-card'),downloadLink:$('save-card'),copyButton:$('copy-card'),formatSelect:$('card-format'),fileTypeSelect:$('card-filetype'),status:$('share-help'),metadata:$('card-file-info')});
 function showExportPreview(gif=false){
   const showGif=gif&&Boolean(gifUrl);
   $('result-card').classList.toggle('hidden',showGif);$('gif-preview').classList.toggle('hidden',!showGif);
@@ -350,28 +366,27 @@ async function prepareMoneyShotGif(){
     $('save-gif').classList.remove('hidden');$('make-gif').classList.add('hidden');$('preview-gif').disabled=false;
     const dimensions=shotRecorder.exportDimensions;
     $('gif-status').textContent=dimensions.width+' × '+dimensions.height+' · GIF · '+(blob.size/1048576).toFixed(1)+' MB · Ready to download';showExportPreview(true);
-  }catch(error){if(token!==gifGeneration)return;$('gif-status').textContent='The GIF could not be created. Try again; your PNG card is still available.';$('make-gif').disabled=false;$('preview-gif').disabled=false;console.warn('Money Shot export unavailable',error);}
+  }catch(error){if(token!==gifGeneration)return;$('gif-status').textContent='The GIF could not be created. Try again; your result card is still available.';$('make-gif').disabled=false;$('preview-gif').disabled=false;console.warn('Money Shot export unavailable',error);}
 }
 $('make-gif').addEventListener('click',prepareMoneyShotGif);$('preview-gif').addEventListener('click',prepareMoneyShotGif);
 $('preview-card').addEventListener('click',()=>showExportPreview(false));$('card-format').addEventListener('change',()=>showExportPreview(false));
-function showResults(result,isBest=false){
+function showResults(result){
   clearInput();$('touch-controls').classList.add('hidden');$('intro').classList.add('hidden');$('intro-footer').classList.add('hidden');$('finish').classList.remove('hidden');
-  $('again').firstChild.textContent='DRIVE '+track.city.toUpperCase()+' AGAIN ';
-  $('result-driver').textContent=result.driver;$('final-score').textContent=String(result.score).padStart(4,'0');$('final-time').textContent=formatTime(result.time);$('final-clears').textContent=result.cleared+' / '+result.total;
+  $('again').firstChild.textContent='DRIVE AGAIN ';
+  $('finish-title').textContent=result.isBest?'YOUR FASTEST RUN.':result.isScoreBest?'A NEW HIGH SCORE.':result.cleared===result.total?'EVERY OBSTACLE CLEARED.':'THAT WAS A FLIGHT.';
   $('finish-track').textContent=getTrack(result.trackId).name.toUpperCase()+' · '+getDifficulty(result.difficultyId).name.toUpperCase()+' COMPLETE';
-  const best=readBest(result.trackId,result.difficultyId);$('best-time').textContent=formatTime(Number.isFinite(best.time)?best.time:result.time);$('new-best').classList.toggle('hidden',!isBest);
-  $('finish-copy').textContent=result.successfulJumps+' safe landings · '+result.ramps+' / '+result.totalRamps+' ramps completed.';
+  $('finish-copy').textContent='Obstacles jumped counts safe aerial clears. All safe landings includes ramp and thrust jumps.';
   $('post-x').href=buildXIntent(result);
   exportResult={...result};clearGifExport();
   $('result-card').setAttribute('aria-label','Results for '+result.driver+': '+result.score+' points in '+formatTime(result.time));
   cardExporter.show(result);
-  $('finish').querySelector('.dialog').scrollTop=0;$('post-x').focus({preventScroll:true});
+  $('finish').querySelector('.dialog').scrollTop=0;focusPanel('finish','post-x');renderPauseToggle();
 }
 function changeDriver(){
   moneyShots.stop();clearGifExport();
   clearInput();run.reset();fx.reset();car.visible=true;shadow.visible=true;cameraInitialized=false;crashDelay=-1;thrustGlow=0;
   for(const id of ['finish','pause-panel','crash-panel','hud','touch-controls','landing-cue'])$(id).classList.add('hidden');
-  $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');document.body.classList.remove('playing','in-flight');$('intro').scrollTop=0;driverField.focus({preventScroll:true});
+  $('intro').classList.remove('hidden');$('intro-footer').classList.remove('hidden');document.body.classList.remove('playing','in-flight');$('intro').scrollTop=0;renderPauseToggle();if(keyboardNavigation)$('start').focus({preventScroll:true});
 }
 $('change-driver').addEventListener('click',changeDriver);$('change-track').addEventListener('click',changeDriver);
 
@@ -379,8 +394,14 @@ const {radio,close:closeRadio}=setupRadio({onOpen:()=>{soundControls.close();cle
 const soundControls=setupSoundControls({audio,onOpen:()=>{closeRadio();clearInput();if(run.state==='running')pauseToggle();}});
 function clearInput(){for(const k in input)input[k]=false;document.querySelectorAll('.touch-controls .active').forEach(b=>b.classList.remove('active'));}
 let controlsResume=false,controlsReturnFocus=null;
+let preferenceStorage;try{preferenceStorage=localStorage;}catch{}
+const guidePreference=createGuidePreference(preferenceStorage);
+$('controls-remember').checked=guidePreference.skipped;
+$('controls-remember').addEventListener('change',()=>guidePreference.setSkipped($('controls-remember').checked));
+const guideBackground=['intro','finish','pause-panel','crash-panel','hud'];
 function closeControls(){
-  $('controls-panel').classList.add('hidden');$('intro').inert=false;document.querySelector('.topbar').inert=false;
+  $('controls-panel').classList.add('hidden');document.body.classList.remove('controls-open');
+  for(const id of guideBackground)$(id).inert=false;document.querySelector('.topbar').inert=false;
   controlsReturnFocus?.focus({preventScroll:true});
 }
 function showControls(resume=false){
@@ -389,72 +410,108 @@ function showControls(resume=false){
   controlsResume=resume&&run.state==='paused';
   if(!controlsResume&&weatherChoice==='auto')applyWeather();
   $('controls-start').textContent=controlsResume?'RESUME RACE →':'START RACE →';
-  $('controls-panel').classList.remove('hidden');$('intro').inert=true;document.querySelector('.topbar').inert=true;
-  ($('controls-start').disabled?$('controls-back'):$('controls-start')).focus({preventScroll:true});
+  $('controls-panel').classList.remove('hidden');document.body.classList.add('controls-open');
+  for(const id of guideBackground)$(id).inert=true;document.querySelector('.topbar').inert=true;
+  focusPanel('controls-panel',$('controls-start').disabled?'controls-back':'controls-start');
 }
+function requestRun(){if(!detailedCar)return;if(guidePreference.skipped){if(weatherChoice==='auto')applyWeather();startRun();}else showControls();}
 $('controls-start').addEventListener('click',()=>{closeControls();controlsResume?pauseToggle():startRun();});
 $('controls-back').addEventListener('click',closeControls);
 $('help-controls').addEventListener('click',()=>showControls(run.state==='running'||run.state==='paused'));
 $('controls-panel').addEventListener('keydown',e=>{
   if(e.code==='Escape'){e.preventDefault();e.stopPropagation();closeControls();return;}
   if(e.code!=='Tab')return;
-  const buttons=[...$('controls-panel').querySelectorAll('button:not(:disabled)')],first=buttons[0],end=buttons.at(-1);
+  const buttons=[...$('controls-panel').querySelectorAll('button:not(:disabled),input:not(:disabled)')],first=buttons[0],end=buttons.at(-1);
   if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}
   else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}
 });
 let cinematicPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,cinematicTime=0;
 function renderCinematicToggle(){document.body.classList.toggle('cinematic-motion-paused',cinematicPaused);$('cinematic-toggle').textContent=cinematicPaused?'PLAY INTRO':'PAUSE INTRO';$('cinematic-toggle').setAttribute('aria-label',cinematicPaused?'Play intro':'Pause intro');$('cinematic-toggle').setAttribute('aria-pressed',String(cinematicPaused));}
 $('cinematic-toggle').addEventListener('click',()=>{cinematicPaused=!cinematicPaused;renderCinematicToggle();});renderCinematicToggle();
-async function startRun(){if(!detailedCar)return;moneyShots.reset();shotRecorder.reset();shotState={active:false,timeScale:1};clearGifExport();runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();soundControls.close();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');for(const v of obstacleVisuals)v.zone.material.opacity=.24;$('notice').classList.remove('visible');}
-function pauseToggle(){if(run.state==='running'){run.state='paused';clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');$('pause').setAttribute('aria-label','Resume game');$('resume').focus();}else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');$('pause').setAttribute('aria-label','Pause game');audio.start();radio.resume();closeRadio();soundControls.close();}}
+async function startRun(){if(!detailedCar)return;moneyShots.reset();shotRecorder.reset();shotState={active:false,timeScale:1};clearGifExport();runDriver=displayDriver(driverField.value);saveDriver(driverField.value);driverField.blur();audio.start().catch(()=>{});radio.resume();closeRadio();soundControls.close();run.reset();run.start();clearInput();fx.reset();car.visible=true;shadow.visible=true;crashDelay=-1;thrustGlow=0;landingCuePlayed=false;cameraInitialized=false;document.body.classList.add('playing');for(const id of ['intro','pause-panel','finish','intro-footer','crash-panel'])$(id).classList.add('hidden');$('hud').classList.remove('hidden');$('touch-controls').classList.remove('hidden');renderPauseToggle();for(const v of obstacleVisuals)v.zone.material.opacity=.24;$('notice').classList.remove('visible');}
+function renderPauseToggle(){
+  const paused=run.state==='paused',button=$('pause');
+  button.setAttribute('aria-label',paused?'Resume game':'Pause game');button.title=paused?'Resume (Esc)':'Pause (Esc)';
+  button.querySelector('path').setAttribute('d',paused?'M7 4 20 12 7 20Z':'M8 5v14M16 5v14');
+  button.disabled=!['running','paused'].includes(run.state);
+}
+function pauseToggle(){
+  if(!$('restart-confirm').classList.contains('hidden'))return;
+  if(run.state==='running'){run.state='paused';moneyShots.stop();clearInput();$('pause-panel').classList.remove('hidden');$('touch-controls').classList.add('hidden');focusPanel('pause-panel','resume');}
+  else if(run.state==='paused'){run.state='running';$('pause-panel').classList.add('hidden');$('touch-controls').classList.remove('hidden');audio.start();radio.resume();closeRadio();soundControls.close();}
+  renderPauseToggle();
+}
 function thrust(){
   if(run.jump())return;
   if(run.state!=='running')return;
-  if(run.jumpTime>=0){if(!run.landingArmed)message(run.verticalVelocity<0?'WAIT FOR LANDING CUE':'WAIT FOR DESCENT','Press Space again when the landing cue turns orange.');return;}
+  if(run.jumpTime>=0){if(!run.landingArmed)message(run.verticalVelocity<0?'WAIT FOR LANDING CUE':'WAIT FOR DESCENT','Press Space again when THRUST NOW appears.');return;}
   if(run.speed<5)message('BUILD SOME SPEED','Accelerate before firing the thrusters.');
   else if(run.charge<.99)message('TANK RECHARGING','Landing thrust always has its own reserve.');
 }
 function setCrashCause(event){
-  const collision=event.reason==='collision';
-  const names={car:'CAR',bus:'BUS',barrier:'BARRIER',pothole:'POTHOLE'};
-  $('crash-reason').textContent=collision?(names[event.obstacle]||'OBSTACLE')+' IMPACT':'LANDING THRUST MISSED';
-  const emphasis=document.createElement('em');emphasis.textContent=collision?'IMPACT.':'LANDING.';
+  const copy=crashPresentation(event);
+  $('crash-reason').textContent=copy.reason;
+  const emphasis=document.createElement('em');emphasis.textContent=copy.emphasis;
   $('crash-title').replaceChildren(document.createTextNode('HARD'),document.createElement('br'),emphasis);
-  $('crash-description').textContent=collision?'Jump over obstacles or steer around them. Contact with cars, buses, barriers, or potholes causes an explosion.':'Fire your thrusters while descending to slow the fall. Watch for THRUST NOW and tap Space again.';
+  $('crash-description').textContent=copy.description;$('crash-hint').textContent=copy.hint;renderPauseToggle();
 }
-function retryCheckpoint(){if(run.state==='crashed')run.recover();}
+function retryCheckpoint(){if(run.state==='crashed'){run.recover();renderPauseToggle();}}
 
 function mute(){soundControls.toggleMute();}
 function finish(){
-  const previous=readBest(),isBest=run.time<previous.time||run.score>previous.score;
+  const previous=readBest(),isBest=run.time<previous.time,isScoreBest=run.score>previous.score;
   saveBest(track.id,{time:Math.min(run.time,previous.time),score:Math.max(run.score,previous.score)},difficulty.id);
-  const result={trackId:track.id,difficultyId:difficulty.id,driver:runDriver,score:run.score,time:run.time,cleared:run.cleared,total:run.obstacles.length,ramps:run.ramps.filter(r=>r.cleared).length,totalRamps:run.ramps.length,successfulJumps:run.successfulJumps};
-  lastResult=result;const saved=saveResult(result);showResults(result,isBest);
+  const result={trackId:track.id,difficultyId:difficulty.id,driver:runDriver,score:run.score,time:run.time,cleared:run.cleared,total:run.obstacles.length,ramps:run.ramps.filter(r=>r.cleared).length,totalRamps:run.ramps.length,successfulJumps:run.successfulJumps,isBest,isScoreBest,...(Number.isFinite(previous.time)?{previousBestTime:previous.time}:{})};
+  lastResult=result;const saved=saveResult(result);showResults(result);
   if(!saved)$('finish-copy').append(' Save your card before closing this tab; this browser could not remember the result.');
   audio.reward();
 }
-$('retry').addEventListener('click',retryCheckpoint);$('crash-restart').addEventListener('click',()=>showControls());
-$('start').addEventListener('click',()=>showControls());$('again').addEventListener('click',()=>showControls());$('restart').addEventListener('click',()=>showControls());$('pause').addEventListener('click',pauseToggle);$('resume').addEventListener('click',pauseToggle);
+let restartReturnFocus=null;
+function closeRestart(){
+  $('restart-confirm').classList.add('hidden');document.body.classList.remove('restart-open');
+  for(const id of ['pause-panel','crash-panel','hud'])$(id).inert=false;document.querySelector('.topbar').inert=false;
+  restartReturnFocus?.focus({preventScroll:true});
+}
+function confirmRestart(){
+  restartReturnFocus=document.activeElement;clearInput();$('restart-confirm').classList.remove('hidden');document.body.classList.add('restart-open');
+  for(const id of ['pause-panel','crash-panel','hud'])$(id).inert=true;document.querySelector('.topbar').inert=true;
+  focusPanel('restart-confirm','restart-confirm-cancel');
+}
+$('restart-confirm-cancel').addEventListener('click',closeRestart);
+$('restart-confirm-start').addEventListener('click',()=>{closeRestart();requestRun();});
+$('restart-confirm').addEventListener('keydown',e=>{
+  if(e.code==='Escape'){e.preventDefault();e.stopPropagation();closeRestart();}
+  if(e.code==='Tab'){
+    const first=$('restart-confirm-start'),last=$('restart-confirm-cancel');
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+});
+$('retry').addEventListener('click',retryCheckpoint);$('crash-restart').addEventListener('click',confirmRestart);
+$('start').addEventListener('click',requestRun);$('again').addEventListener('click',requestRun);$('restart').addEventListener('click',confirmRestart);$('pause').addEventListener('click',pauseToggle);$('resume').addEventListener('click',pauseToggle);
+renderPauseToggle();
 $('recover-control').addEventListener('click',()=>{if(run.state==='running')run.recover();});
 $('touch-thrust').addEventListener('pointerdown',e=>{e.preventDefault();if(run.state!=='running')return;e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.classList.add('active');thrust();});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])$('touch-thrust').addEventListener(event,()=> $('touch-thrust').classList.remove('active'));
-const keyMap={KeyW:'gas',ArrowUp:'gas',KeyS:'brake',ArrowDown:'brake',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
+const keyMap=DRIVING_KEYS;
 window.addEventListener('keydown',e=>{
-  if(!$('controls-panel').classList.contains('hidden'))return;
+  if(!$('controls-panel').classList.contains('hidden')||!$('restart-confirm').classList.contains('hidden'))return;
   if(e.target instanceof Element&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
   if(!$('radio-panel').classList.contains('hidden')&&e.code==='Escape'){e.preventDefault();closeRadio();return;}
   if(!$('sound-panel').classList.contains('hidden')&&e.code==='Escape'){e.preventDefault();soundControls.close();return;}
   if(e.target instanceof Element&&e.target.closest('#radio-panel,#sound-panel'))return;
   const driving=run.state==='running';
   if(keyMap[e.code]&&driving){e.preventDefault();input[keyMap[e.code]]=true;document.querySelector(`[data-control="${keyMap[e.code]}"]`)?.classList.add('active');}
-  if(e.code==='Space'&&!driving)return;
-  if((e.code==='Space'&&driving)||['Escape','KeyP','KeyR'].includes(e.code))e.preventDefault();
+  const action=actionForKey(e.code);
+  if(action==='thrust'&&!driving)return;
+  if((action==='thrust'&&driving)||['pause','recover'].includes(action))e.preventDefault();
   if(e.repeat)return;
-  if(e.code==='Space'){$('touch-thrust').classList.add('active');thrust();}
-  if(e.code==='Escape'||e.code==='KeyP')pauseToggle();
-  if(e.code==='KeyR')run.recover();
-  if(e.code==='KeyM')mute();
-  if(e.code==='KeyC'){e.preventDefault();toggleCamera();}
+  if(action==='thrust'){$('touch-thrust').classList.add('active');thrust();}
+  if(action==='pause')pauseToggle();
+  if(action==='recover'){run.recover();renderPauseToggle();}
+  if(action==='mute')mute();
+  if(action==='camera'){e.preventDefault();toggleCamera();}
+  if(action==='skip'&&moneyShots.active){e.preventDefault();moneyShots.stop();}
 });
 window.addEventListener('keyup',e=>{if(keyMap[e.code]){input[keyMap[e.code]]=false;document.querySelector(`[data-control="${keyMap[e.code]}"]`)?.classList.remove('active');}if(e.code==='Space')$('touch-thrust').classList.remove('active');});window.addEventListener('blur',()=>{clearInput();if(run.state==='running')pauseToggle();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&run.state==='running')pauseToggle();});
 document.querySelectorAll('[data-control]').forEach(b=>{const c=b.dataset.control;b.addEventListener('pointerdown',e=>{e.preventDefault();if(run.state!=='running')return;b.setPointerCapture(e.pointerId);input[c]=true;b.classList.add('active');});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>{input[c]=false;b.classList.remove('active');});});
@@ -534,7 +591,7 @@ function animate(now){
   fx.update(run.state==='paused'?0:dt,{position:pos,forward,speed:run.speed,corner,airborne:run.jumpTime>=0,playing:run.state==='running',thrusting:thrustGlow>0});
   thrustGlow=Math.max(0,thrustGlow-dt);
   if(flashTime>0){flashTime-=dt;if(flashTime<=0)$('impact-flash').classList.remove('active');}
-  if(crashDelay>=0){crashDelay-=dt;if(crashDelay<0&&run.state==='crashed'){$('crash-panel').classList.remove('hidden');$('retry').focus();}}
+  if(crashDelay>=0){crashDelay-=dt;if(crashDelay<0&&run.state==='crashed'){$('crash-panel').classList.remove('hidden');focusPanel('crash-panel','retry');}}
   if(run.landingWindow&&!landingCuePlayed){audio.warning();landingCuePlayed=true;}
   $('speed-lines').style.opacity=run.state==='running'?clamp((run.speed-40)/45,0,.45):0;
   const inFlight=run.jumpTime>=0&&run.state!=='crashed';document.body.classList.toggle('in-flight',inFlight);
