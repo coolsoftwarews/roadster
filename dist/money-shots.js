@@ -8,8 +8,10 @@ export const MONEY_SHOT_ANGLES = Object.freeze({
 });
 
 const ANGLES = Object.keys(MONEY_SHOT_ANGLES);
-const DURATION = 2;
-const TIME_SCALE = .22;
+const DURATION = 6.5;
+// Show the same airborne moment over a longer cinematic, leaving the landing
+// window and game-time physics unchanged (previously 2 seconds at .22 speed).
+const TIME_SCALE = .22 * 2 / DURATION;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
 

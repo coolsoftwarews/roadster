@@ -104,7 +104,7 @@ export function gifLzw(indexed) {
 /** frames: [{rgba: Uint8Array|Uint8ClampedArray, delay: milliseconds}]. */
 export function encodeGif({ width, height, frames, loop = 0, comment = '' }) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > 2048 || height > 2048) throw new TypeError('Invalid GIF dimensions.');
-  if (!Array.isArray(frames) || !frames.length || frames.length > 60) throw new TypeError('A GIF needs between 1 and 60 frames.');
+  if (!Array.isArray(frames) || !frames.length || frames.length > 84) throw new TypeError('A GIF needs between 1 and 84 frames.');
   if (frames.some(frame => !(frame.rgba instanceof Uint8Array || frame.rgba instanceof Uint8ClampedArray) || frame.rgba.length !== width * height * 4)) throw new TypeError('A GIF frame has invalid pixel data.');
   const { palette, size } = paletteFor(frames);
   const lookup = new Int16Array(32768).fill(-1);

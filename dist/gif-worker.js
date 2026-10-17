@@ -1,4 +1,4 @@
-import { encodeGif } from './gif-encoder.js?v=money-shots-1';
+import { encodeGif } from './gif-encoder.js?v=money-long-1';
 import { layoutGifCaption } from './gif-caption.js?v=money-shots-1';
 
 function brandFrames(width, height, frames, result) {

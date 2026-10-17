@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { encodeGif } from '../dist/gif-encoder.js';
 import { createMoneyShotRecorder, MONEY_SHOT_CAPTURE } from '../dist/money-shot-gif.js';
 import { layoutGifCaption } from '../dist/gif-caption.js';
+import { MoneyShotDirector } from '../dist/money-shots.js';
 
 // Independent GIF reader exercises sub-blocks, dictionary resets and variable
 // code widths. It deliberately uses decoded byte sequences, not encoder keys.
@@ -120,14 +121,49 @@ test('recorder bounds capture, keeps a complete prior clip, and resets between r
     assert.equal(recorder.available, false);
     await assert.rejects(recorder.export({}), /Complete a money shot/);
     recorder.start();
-    for (let index = 0; index < 300; index++) recorder.capture({ width: 1920, height: 1080 }, 1 / 60);
-    assert.equal(captures, 30);
+    for (let index = 0; index < 600; index++) recorder.capture({ width: 1920, height: 1080 }, 1 / 60);
+    assert.equal(captures, 84);
     assert.equal(recorder.recording, false);
     assert.equal(recorder.available, true);
     recorder.start(); recorder.capture({ width: 1920, height: 1080 }, 1 / 60); recorder.finish();
     assert.equal(recorder.available, true, 'An interrupted shot must retain the last usable clip');
     recorder.reset(); assert.equal(recorder.available, false); assert.equal(recorder.recording, false);
   } finally { globalThis.document = previousDocument; }
+});
+
+test('a full cinematic exports at least six seconds of decodable changing GIF footage', async () => {
+  const previousDocument = globalThis.document, previousWorker = globalThis.Worker;
+  let captures = 0;
+  // Reduce only the pixel dimensions in the worker double so the independent
+  // decoder can validate every real capture and delay without a large fixture.
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    fillRect() {}, drawImage() {},
+    getImageData: () => ({ data: Uint8Array.from([captures++ % 256, 0, 0, 255]) })
+  }) }) };
+  globalThis.Worker = class {
+    postMessage({frames}) {
+      const bytes = encodeGif({width:1,height:1,frames});
+      queueMicrotask(() => this.onmessage({data:{bytes:bytes.buffer,width:1,height:1}}));
+    }
+    terminate() {}
+  };
+  try {
+    const recorder = createMoneyShotRecorder();
+    const director = new MoneyShotDirector({random:() => 0});
+    const flight = {state:'running',jumpTime:.2,flightProgress:.12,height:3};
+    director.beginFlight();
+    for (let tick = 0; tick < 800; tick++) {
+      const shot = director.update(1/60,flight);
+      if (shot.started) recorder.start();
+      if (shot.ended) { recorder.finish(); break; }
+      if (shot.active) recorder.capture({width:640,height:360},1/60);
+    }
+    const gif = readGif(new Uint8Array(await (await recorder.export({driver:'Gabriel'})).arrayBuffer()));
+    assert.ok(gif.frames.length >= 78, 'longer clip contains newly captured frames, not repeated loops');
+    assert.ok(gif.frames.length <= MONEY_SHOT_CAPTURE.maxFrames);
+    assert.ok(gif.frames.reduce((total,frame)=>total+frame.delay,0) >= 6000, 'encoded GIF is at least three times the original two seconds');
+    assert.notDeepEqual(gif.frames[0].pixels,gif.frames.at(-1).pixels);
+  } finally {globalThis.document=previousDocument;globalThis.Worker=previousWorker;}
 });
 
 test('export uses a race-safe snapshot and reports the encoded GIF dimensions', async () => {

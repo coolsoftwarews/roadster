@@ -1,4 +1,4 @@
-export const MONEY_SHOT_CAPTURE = Object.freeze({ width: 640, height: 360, fps: 12, maxFrames: 30 });
+export const MONEY_SHOT_CAPTURE = Object.freeze({ width: 640, height: 360, fps: 12, maxFrames: 84 });
 
 /** Retains one short clip in memory. Call capture synchronously after render(). */
 export function createMoneyShotRecorder() {
@@ -55,7 +55,7 @@ export function createMoneyShotRecorder() {
       const snapshot = { driver: String(result?.driver || 'Roadster driver'), score: Number(result?.score) || 0 };
       return new Promise((resolve, reject) => {
         let worker;
-        try { worker = new Worker(new URL('./gif-worker.js?v=money-shots-1', import.meta.url), { type: 'module' }); }
+        try { worker = new Worker(new URL('./gif-worker.js?v=money-long-1', import.meta.url), { type: 'module' }); }
         catch { reject(new Error('The GIF exporter could not start. Please try again.')); return; }
         const done = (error, bytes) => {
           clearTimeout(timeout); worker.terminate();

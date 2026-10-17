@@ -75,7 +75,8 @@ function completeFlight({ kind, difficulty = 'easy', fps = 60, enabled = true, e
   if (enabled) {
     assert.equal(starts, 1);
     assert.ok(endAt !== null && endAt < landingAt);
-    assert.ok(shotEndedAt - shotStartedAt <= 2 + 1 / fps + 1e-8, 'shots end within two real seconds plus one frame');
+    assert.ok(shotEndedAt - shotStartedAt >= 6.5 - 1e-8, 'an uninterrupted shot supplies more than three times the original two-second footage');
+    assert.ok(shotEndedAt - shotStartedAt <= 6.5 + 1 / fps + 1e-8, 'shots end within 6.5 real seconds plus one frame');
   } else assert.equal(starts, 0);
   return { run, realTime };
 }
@@ -96,12 +97,12 @@ test('30, 60 and 120 Hz preserve the same game-time landing outcome while the sh
       assert.equal(slow.run.successfulJumps, normal.run.successfulJumps);
       assert.ok(Math.abs(slow.run.s - normal.run.s) < 1, 'frame-rate integration stays within one metre');
       assert.ok(Math.abs(slow.run.speed - normal.run.speed) < .1);
-      assert.ok(slow.realTime > normal.realTime + 1.4, 'only the real-time presentation is extended');
+      assert.ok(slow.realTime > normal.realTime + 5.9, 'only the real-time presentation is extended');
     }
   }
 });
 
-test('a 15 Hz display still ends the camera shot after two real seconds', () => {
+test('a 15 Hz display still ends the camera shot after 6.5 real seconds', () => {
   for (const kind of ['manual', 'ramp']) completeFlight({ kind, fps:15 });
 });
 

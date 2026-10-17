@@ -26,17 +26,18 @@ test('a selected shot waits for enough altitude and progress before slowing time
   const begun = director.update(.1, flight({ height: 1.51, flightProgress: .08 }));
   assert.equal(begun.started, true);
   assert.equal(begun.progress, 0);
-  assert.equal(begun.timeScale, .22);
+  assert.equal(begun.timeScale, .22 * 2 / 6.5);
   assert.equal(director.update(.1, flight()).started, false);
 });
 
-test('shots end at two real seconds even though simulation is slower', () => {
+test('shots last 6.5 real seconds while preserving the original airborne simulation interval', () => {
   const director = new MoneyShotDirector({ random: () => 0 });
   startShot(director);
-  const middle = director.update(1, flight());
+  const middle = director.update(3.25, flight());
   assert.equal(middle.active, true);
   assert.equal(middle.progress, .5);
-  const end = director.update(1, flight());
+  assert.equal(middle.timeScale * 6.5, .22 * 2);
+  const end = director.update(3.25, flight());
   assert.equal(end.active, false);
   assert.equal(end.ended, true);
   assert.equal(end.progress, 1);
