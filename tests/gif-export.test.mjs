@@ -131,7 +131,7 @@ test('recorder bounds capture, keeps a complete prior clip, and resets between r
   } finally { globalThis.document = previousDocument; }
 });
 
-test('a full cinematic exports at least six seconds of decodable changing GIF footage', async () => {
+test('full cinematics preserve at least 6.5 seconds of GIF footage even on slow displays', async () => {
   const previousDocument = globalThis.document, previousWorker = globalThis.Worker;
   let captures = 0;
   // Reduce only the pixel dimensions in the worker double so the independent
@@ -147,23 +147,23 @@ test('a full cinematic exports at least six seconds of decodable changing GIF fo
     }
     terminate() {}
   };
-  try {
+  try { for (const fps of [60, 8, 2]) {
     const recorder = createMoneyShotRecorder();
     const director = new MoneyShotDirector({random:() => 0});
     const flight = {state:'running',jumpTime:.2,flightProgress:.12,height:3};
     director.beginFlight();
     for (let tick = 0; tick < 800; tick++) {
-      const shot = director.update(1/60,flight);
+      const shot = director.update(1/fps,flight);
       if (shot.started) recorder.start();
-      if (shot.ended) { recorder.finish(); break; }
-      if (shot.active) recorder.capture({width:640,height:360},1/60);
+      if (shot.ended) { recorder.finish(1/fps); break; }
+      if (shot.active) recorder.capture({width:640,height:360},1/fps);
     }
     const gif = readGif(new Uint8Array(await (await recorder.export({driver:'Gabriel'})).arrayBuffer()));
-    assert.ok(gif.frames.length >= 78, 'longer clip contains newly captured frames, not repeated loops');
+    assert.ok(gif.frames.length >= Math.floor(6.5 * Math.min(fps,12)), 'longer clip contains newly captured frames, not repeated loops');
     assert.ok(gif.frames.length <= MONEY_SHOT_CAPTURE.maxFrames);
-    assert.ok(gif.frames.reduce((total,frame)=>total+frame.delay,0) >= 6000, 'encoded GIF is at least three times the original two seconds');
+    assert.ok(gif.frames.reduce((total,frame)=>total+frame.delay,0) >= 6500, 'encoded GIF preserves the full cinematic duration');
     assert.notDeepEqual(gif.frames[0].pixels,gif.frames.at(-1).pixels);
-  } finally {globalThis.document=previousDocument;globalThis.Worker=previousWorker;}
+  } } finally {globalThis.document=previousDocument;globalThis.Worker=previousWorker;}
 });
 
 test('export uses a race-safe snapshot and reports the encoded GIF dimensions', async () => {

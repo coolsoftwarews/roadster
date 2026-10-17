@@ -122,8 +122,11 @@ export function encodeGif({ width, height, frames, loop = 0, comment = '' }) {
   put([0x21, 0xff, 11]); chunks.push(string('NETSCAPE2.0'));
   put([3, 1, ...word(Math.min(65535, Math.max(0, loop))), 0]);
   if (comment) { put([0x21, 0xfe]); blocks(string(comment)); }
+  let delayRemainder = 0;
   for (const frame of frames) {
-    const delay = Math.min(65535, Math.max(2, Math.round((Number(frame.delay) || 1000 / 12) / 10)));
+    const exactDelay = (Number(frame.delay) || 1000 / 12) / 10 + delayRemainder;
+    const delay = Math.min(65535, Math.max(2, Math.round(exactDelay)));
+    delayRemainder = exactDelay - delay;
     put([0x21, 0xf9, 4, 4, ...word(delay), 0, 0]);
     put([0x2c, 0, 0, 0, 0, ...word(width), ...word(height), 0]);
     put([8]);

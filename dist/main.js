@@ -534,7 +534,7 @@ function animate(now){
   }}
   shotState=moneyShots.update(realDt,run);
   if(shotState.started){shotRecorder.start();shake=0;}
-  if(shotState.ended){shotRecorder.finish();cameraInitialized=false;}
+  if(shotState.ended){shotRecorder.finish(realDt);cameraInitialized=false;}
   document.body.classList.toggle('money-shot-active',shotState.active);$('money-shot-overlay').classList.toggle('hidden',!shotState.active);
   if(shotState.active)$('money-shot-angle').textContent=({front:'FRONT TRACKING',rear:'REAR CHASE',side:'SIDE SWEEP',low:'LOW FLYBY',top:'OVERHEAD'}[shotState.angle]);
   const preview=run.state==='ready';const visualS=preview?run.obstacles[0].s-45:run.s;const f=frame(visualS);const pos=pointOn(visualS,preview?0:run.offset,run.height+.04);

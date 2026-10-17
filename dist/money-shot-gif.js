@@ -10,7 +10,13 @@ export function createMoneyShotRecorder() {
   let recording = [], latest = null;
   let exportDimensions = null;
 
-  function finish() {
+  function finish(dtReal = 0) {
+    // Include the gap from the last rendered frame to the end of the shot.
+    // A slow display must hold a frame longer instead of shortening the GIF.
+    if (active && Number.isFinite(dtReal)) elapsed += Math.max(0, dtReal);
+    if (active && recording.length && elapsed > lastCapture) {
+      recording[recording.length - 1].delay = Math.max(20, (elapsed - lastCapture) * 1000);
+    }
     active = false;
     if (recording.length >= 3) latest = recording;
     recording = [];
@@ -19,7 +25,7 @@ export function createMoneyShotRecorder() {
 
   function capture(sourceCanvas, dtReal) {
     if (!active || !context || !sourceCanvas?.width || !sourceCanvas?.height) return;
-    elapsed += Math.max(0, Math.min(.25, Number(dtReal) || 0));
+    elapsed += Number.isFinite(dtReal) ? Math.max(0, dtReal) : 0;
     if (elapsed + 1e-7 < nextCapture) return;
     try {
       const scale = Math.min(width / sourceCanvas.width, height / sourceCanvas.height);
