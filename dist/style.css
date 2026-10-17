@@ -260,3 +260,14 @@ body:not(.playing) #camera-toggle{display:none}
 @media(max-width:580px){.playing .brand>div{display:none}.playing .brand{display:flex;gap:0}.playing .brand-symbol{margin-right:0;font-size:31px}.camera-toggle{width:48px;min-width:48px}.playing .top-actions{gap:6px}}
 @media(max-width:360px){.playing .top-actions{gap:5px}.camera-toggle{width:45px;min-width:45px}.playing .brand-symbol{font-size:27px}}
 @media(max-height:600px) and (min-width:581px){.top-actions{margin-left:auto}.camera-toggle{height:44px;width:52px;min-width:52px}.run-stats{gap:18px}.run-stats strong{font-size:18px}}
+
+/* The detailed car is prepared before its cinematic reveal. */
+.model-load-status{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:20px;text-align:center;background:radial-gradient(ellipse at 50% 35%,#203541e8,#0b1922ed 75%);backdrop-filter:blur(8px);pointer-events:auto}
+.model-load-mark{font-size:35px;line-height:1;font-weight:900;letter-spacing:-6px;font-style:italic;transform:skew(-8deg);margin-bottom:17px;color:#f7f4eb}.model-load-mark>span{color:var(--accent)}
+.model-load-status h3{font-size:10px;font-weight:700;letter-spacing:2px;line-height:1.5;margin:0;color:#f3eee4}.model-load-status p{font-size:11px;line-height:1.5;margin:8px 0 16px;color:#bdcfd5}
+.model-load-status progress{display:block;appearance:none;-webkit-appearance:none;width:220px;max-width:80%;height:3px;border:0;border-radius:3px;overflow:hidden;background:#ffffff20;color:var(--accent);accent-color:var(--accent)}
+.model-load-status progress::-webkit-progress-bar{background:#ffffff20;border-radius:3px}.model-load-status progress::-webkit-progress-value{background:linear-gradient(90deg,#ffa17c,#ffc6a8);border-radius:3px;transition:width .2s}.model-load-status progress::-moz-progress-bar{background:#ffad88;border-radius:3px}
+.model-load-retry{min-height:40px;padding:10px 20px;margin-top:3px;background:#ffad88;border:1px solid #ffbe9e;border-radius:4px;color:#142631;font-size:11px;font-weight:700;letter-spacing:.3px}.model-load-retry:hover{background:#ffcaac}
+.primary-button:disabled,.primary-button:disabled:hover{cursor:wait;background:#65727a;color:#d5e0e2;opacity:.65;transform:none}
+@media(max-width:580px){.model-load-status{padding:18px}.model-load-mark{font-size:31px;margin-bottom:14px}.model-load-status h3{font-size:9px;letter-spacing:1.5px}.model-load-status p{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.model-load-status progress::-webkit-progress-value{transition:none}}

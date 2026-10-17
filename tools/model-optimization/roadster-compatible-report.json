@@ -1,0 +1,162 @@
+{
+  "source": "roadster.glb",
+  "output": "roadster-compatible.glb",
+  "bytes": 12916344,
+  "triangles": 274200,
+  "nodeCount": 193,
+  "meshCount": 105,
+  "materialCount": 26,
+  "requiredExtensions": [],
+  "usedExtensions": [
+    "KHR_materials_clearcoat",
+    "KHR_materials_emissive_strength",
+    "KHR_materials_specular",
+    "KHR_materials_transmission",
+    "KHR_texture_transform"
+  ],
+  "bounds": {
+    "min": [
+      -0.9285150597576406,
+      -0.011344356977289749,
+      -2.244340613958699
+    ],
+    "max": [
+      0.9625699611923848,
+      1.16784567588712,
+      2.381565923361391
+    ]
+  },
+  "checkedComponents": 2910330,
+  "textures": [
+    {
+      "name": "",
+      "slots": [
+        "baseColorTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 160978,
+      "lossless": false
+    },
+    {
+      "name": "",
+      "slots": [
+        "normalTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/png",
+      "bytes": 296995,
+      "lossless": true
+    },
+    {
+      "name": "",
+      "slots": [
+        "baseColorTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 83669,
+      "lossless": false
+    },
+    {
+      "name": "",
+      "slots": [
+        "normalTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/png",
+      "bytes": 577707,
+      "lossless": true
+    },
+    {
+      "name": "roadster-paint-flake-normal",
+      "slots": [
+        "normalTexture"
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "mime": "image/png",
+      "bytes": 547777,
+      "lossless": true
+    },
+    {
+      "name": "",
+      "slots": [
+        "baseColorTexture"
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "mime": "image/png",
+      "bytes": 3243,
+      "lossless": true
+    },
+    {
+      "name": "",
+      "slots": [
+        "normalTexture"
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "mime": "image/png",
+      "bytes": 2013,
+      "lossless": true
+    },
+    {
+      "name": "",
+      "slots": [
+        "baseColorTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/jpeg",
+      "bytes": 79255,
+      "lossless": false
+    },
+    {
+      "name": "",
+      "slots": [
+        "metallicRoughnessTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/png",
+      "bytes": 745417,
+      "lossless": true
+    },
+    {
+      "name": "",
+      "slots": [
+        "normalTexture"
+      ],
+      "size": [
+        1024,
+        1024
+      ],
+      "mime": "image/png",
+      "bytes": 317591,
+      "lossless": true
+    }
+  ]
+}

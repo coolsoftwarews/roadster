@@ -26,7 +26,7 @@
   <meta name="twitter:image" content="https://roadster.coolsoftware.io/assets/roadster-launch.png">
   <meta name="twitter:image:alt" content="A red Roadster hovering above a launch stage on glowing blue thrusters.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ff6845'/%3E%3Cpath d='M16 48V16h20c17 0 17 22 0 22H26l18 10M26 25h10' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=cinematic-1">
+  <link rel="stylesheet" href="style.css?v=model-loading-1">
   <script defer src="https://analytics-ops1.coolsoftware.io/script.js" data-website-id="8581cf0e-5736-4eef-ac55-14426630d248"></script>
 </head>
 <body>
@@ -64,10 +64,10 @@
         <div class="driver-field"><label for="driver-name">DRIVER <span id="driver-count">0 / 255</span></label><input id="driver-name" type="text" maxlength="255" placeholder="Your name" autocomplete="nickname" autocapitalize="off" spellcheck="false" aria-describedby="driver-save-status"><small id="driver-save-status">Saved in this browser · shown on your results and card</small></div>
         <fieldset class="difficulty-picker"><legend>DIFFICULTY</legend><div id="difficulty-options" class="difficulty-options" aria-describedby="difficulty-description"></div><p id="difficulty-description"></p></fieldset>
         <div class="weather-picker"><label for="weather-select">TIME & WEATHER</label><select id="weather-select" aria-describedby="weather-description"></select><small id="weather-description">Automatic conditions for your next drive.</small></div>
-        <button id="start" class="primary-button">LET’S DRIVE <span>↗</span></button>
+        <button id="start" class="primary-button" disabled>LET’S DRIVE <span>↗</span></button>
       </div>
       <div class="launch-showcase">
-        <div class="cinematic-stage" role="region" aria-label="Live cinematic preview of your Roadster and selected circuit"><span class="cinematic-caption"><i aria-hidden="true"></i> YOUR NEXT ESCAPE</span><button id="cinematic-toggle" class="cinematic-toggle" aria-pressed="false">Pause intro <span aria-hidden="true">Ⅱ</span></button></div>
+        <div class="cinematic-stage" role="region" aria-label="Live cinematic preview of your Roadster and selected circuit"><span class="cinematic-caption"><i aria-hidden="true"></i> YOUR NEXT ESCAPE</span><button id="cinematic-toggle" class="cinematic-toggle" aria-pressed="false">Pause intro <span aria-hidden="true">Ⅱ</span></button><div id="model-load-status" class="model-load-status" role="status" aria-live="polite"><span class="model-load-mark" aria-hidden="true">R<span>/</span></span><h3 id="model-load-title">PREPARING YOUR ROADSTER</h3><p id="model-load-detail">Loading detailed model…</p><progress id="model-load-progress" max="100" aria-label="Roadster model loading"></progress><button id="model-load-retry" class="model-load-retry hidden">Retry loading</button></div></div>
         <div class="brief-card"><div class="brief-head"><span>CHOOSE YOUR CIRCUIT</span><b id="brief-track">01 / CANYON RUN</b></div><nav id="track-options" class="track-options" aria-label="Choose a racing track"></nav><div class="selected-track"><h2 id="track-title">Canyon Circuit</h2><p id="track-description"></p></div><div class="brief-stats"><div><strong id="track-distance">2.4</strong><small>KILOMETRES</small></div><div><strong id="obstacle-count">18</strong><small>OBSTACLES</small></div><div><strong>+100</strong><small>PER CLEAR</small></div></div><small class="track-fiction">City-inspired fantasy circuits · no real service routes</small><a class="model-credit" href="credits.html" target="_blank" rel="noopener">3D model by metarex.4d · Credits ↗</a></div>
       </div>
   <footer id="intro-footer"><a class="follow-x" href="https://x.com/coolsoftware_ws" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-5-7.6L5.2 22H2l7.5-8.7L.8 2h6.5l4.6 7L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z"/></svg><span>Follow me on X<small>@coolsoftware_ws</small></span><b aria-hidden="true">↗</b></a><a href="https://roadster.coolsoftware.io" target="_blank" rel="noopener noreferrer">roadster.coolsoftware.io ↗</a></footer>
@@ -105,6 +105,6 @@
     <section id="error" class="overlay center-panel hidden"><div class="dialog"><h2>LET’S GET<br>YOU ROLLING.</h2><p id="error-text">Your browser could not start the 3D renderer. Enable hardware acceleration or try another browser.</p><button onclick="location.reload()" class="primary-button">TRY AGAIN <span>↗</span></button></div></section>
   </main>
   <div id="touch-controls" class="touch-controls hidden" role="group" aria-label="Driving controls"><div class="steer-buttons"><button data-control="left" aria-label="Steer left"><span aria-hidden="true">←</span><small>A / ←</small></button><button data-control="right" aria-label="Steer right"><span aria-hidden="true">→</span><small>D / →</small></button><button id="touch-thrust" class="touch-thrust" aria-label="Thrust to jump or cushion landing"><span aria-hidden="true">↑</span><strong>THRUST</strong><small>SPACE</small></button></div><div class="pedal-buttons"><button data-control="brake" class="brake-button" aria-label="Brake"><strong>BRAKE</strong><small>S / ↓</small></button><button data-control="gas" class="gas-button" aria-label="Accelerate"><strong>GAS</strong><small>W / ↑</small></button></div></div>
-  <script type="module" src="main.js?v=cinematic-1"></script>
+  <script type="module" src="main.js?v=model-loading-1"></script>
 </body>
 </html>

@@ -1,14 +1,17 @@
 import * as THREE from './vendor/three.module.min.js';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/meshopt_decoder.module.js';
+import {fetchModelBytes,loadModelWithRecovery} from './model-loading.js?v=model-loading-1';
 
 // Tesla Roadster 2020 by metarex.4d, CC BY 4.0. See credits.html.
 // Only this visual child changes; the outer car keeps the game's collision,
 // flight, recovery and camera transforms.
-const MODEL_URL = new URL('./assets/models/roadster.glb', import.meta.url).href;
-const MOBILE_MODEL_URL = new URL('./assets/models/roadster-mobile.glb', import.meta.url).href;
+const MODEL_URL = new URL('./assets/models/roadster.glb?v=model-loading-1', import.meta.url).href;
+const MOBILE_MODEL_URL = new URL('./assets/models/roadster-mobile.glb?v=model-loading-1', import.meta.url).href;
+const COMPATIBLE_MODEL_URL = new URL('./assets/models/roadster-compatible.glb?v=model-loading-1', import.meta.url).href;
 const TARGET_LENGTH = 5.2;
 const key = name => name.toLowerCase().replace(/[^a-z0-9]/g, '');
+const decoderReady=MeshoptDecoder.supported?MeshoptDecoder.ready.then(()=>true,()=>false):Promise.resolve(false);
 
 function preferredModelUrl() {
   const touchScreen = globalThis.matchMedia?.('(pointer: coarse)').matches;
@@ -88,9 +91,22 @@ function tuneMaterials(model, renderer) {
   return [...seen];
 }
 
-export async function loadDetailedRoadster(renderer, {url = preferredModelUrl()} = {}) {
+export async function loadDetailedRoadster(renderer, {url,onProgress=()=>{}} = {}) {
+  const preferred=preferredModelUrl();
+  const compressedSupported=await decoderReady;
+  const candidates=url?[{url,variant:'requested'}]:compressedSupported?[
+    {url:preferred,variant:preferred===MODEL_URL?'full':'mobile'},
+    ...(preferred===MODEL_URL?[{url:MOBILE_MODEL_URL,variant:'mobile'}]:[]),
+    {url:COMPATIBLE_MODEL_URL,variant:'compatible'}
+  ]:[{url:COMPATIBLE_MODEL_URL,variant:'compatible'}];
+  return loadModelWithRecovery(candidates,(candidate,options)=>loadRoadsterAsset(renderer,candidate.url,options),onProgress);
+}
+
+async function loadRoadsterAsset(renderer,url,{onProgress,cache}) {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const gltf = await loader.loadAsync(url);
+  const bytes=await fetchModelBytes(url,{onProgress,cache});
+  onProgress({stage:'decode'});
+  const gltf = await loader.parseAsync(bytes,new URL('.',url).href);
   const source = gltf.scene;
   source.updateMatrixWorld(true);
   const bounds = new THREE.Box3().setFromObject(source);

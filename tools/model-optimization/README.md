@@ -1,6 +1,6 @@
 # Roadster model preparation
 
-The published assets are `dist/assets/models/roadster.glb` (desktop) and `roadster-mobile.glb`. Their original is a user-provided download and is deliberately not committed to this repository.
+The primary assets are `dist/assets/models/roadster.glb` (desktop) and `roadster-mobile.glb`. `roadster-compatible.glb` provides the desktop geometry without browser compression requirements. Their original is a user-provided download and is deliberately not committed to this repository.
 
 ## Reproduce
 
@@ -13,6 +13,7 @@ node optimize.mjs 'C:\path\to\tesla_roadster_2020.glb' '../../dist/assets/models
 node verify.mjs
 node verify.mjs '../../dist/assets/models/roadster-mobile.glb'
 node verify-preserved-surfaces.mjs 'C:\path\to\tesla_roadster_2020.glb' '../../dist/assets/models/roadster.glb'
+node compatibility.mjs
 ```
 
 Optional arguments are destination path, secondary-part triangle target ratio (default `0.10`), relative simplification error limit (default `0.005`), and profile (`desktop` by default, or `mobile`). Mesh boundaries and error limits prevent the requested ratios from being achieved on every primitive. The script verifies all original named nodes and parent relationships remain unchanged, decodes the result, and writes `optimization-report.json` or the named variant's report.
@@ -47,6 +48,12 @@ loader.setMeshoptDecoder(MeshoptDecoder);
 The decoder embeds its WebAssembly payload; no external WASM URL or network dependency is required. It retains the `ready`, `supported`, `decodeGltfBuffer`, and `decodeGltfBufferAsync` interface used by Three.js GLTFLoader r160. Its MIT license is at `dist/vendor/MESHOPT-LICENSE.txt`.
 
 The GLBs require `EXT_meshopt_compression` and `EXT_texture_webp`. Three.js handles the WebP textures; a WebP-capable browser is required. Neither variant requires `KHR_mesh_quantization`.
+
+### Compatibility asset
+
+`node compatibility.mjs` reads the optimized desktop asset and creates `roadster-compatible.glb` (12,916,344 bytes). It retains all 274,200 triangles, 193 nodes, 105 mesh primitives and 26 materials, with identical positions, normals, tangents, indices, transforms and material bindings. It removes Meshopt compression and converts textures to PNG or JPEG, preserving their dimensions. Linear-channel maps, normals and transparency use PNG; opaque color maps use JPEG quality 94 with 4:4:4 sampling.
+
+The compatibility asset has **no required glTF extensions** and needs neither WebAssembly nor WebP in the browser. The script loads its output with a decoder-free reader, verifies 2,910,330 geometry components byte-for-byte against the desktop source, and writes `roadster-compatible-report.json`. The source desktop asset is never overwritten. The larger compatibility download is intended as a fallback when the normal asset cannot load.
 
 ## Orientation and animation
 
