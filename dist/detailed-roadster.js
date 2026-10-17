@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three.module.min.js';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/meshopt_decoder.module.js';
-import {fetchModelBytes,loadModelWithRecovery} from './model-loading.js?v=model-loading-1';
+import {fetchModelBytes,loadModelWithRecovery} from './model-loading.js?v=model-loading-2';
 
 // Tesla Roadster 2020 by metarex.4d, CC BY 4.0. See credits.html.
 // Only this visual child changes; the outer car keeps the game's collision,

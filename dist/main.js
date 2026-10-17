@@ -7,7 +7,7 @@ import {MoneyShotDirector,shotCameraPose} from './money-shots.js?v=money-1';
 import {createMoneyShotRecorder} from './money-shot-gif.js?v=money-1';
 import {chaseCameraPosition} from './driving-view.js?v=flight-3';
 import {createVisualEffects,createAsphaltTexture,installEnvironment,enhanceRoadster,createGroundTexture} from './visual-effects.js?v=realism-1';
-import {loadDetailedRoadster} from './detailed-roadster.js?v=model-loading-1';
+import {loadDetailedRoadster} from './detailed-roadster.js?v=model-loading-2';
 
 import {DIFFICULTIES,getDifficulty} from './difficulty.js?v=drive-2';
 import {setupRadio} from './radio-ui.js?v=cinematic-1';
@@ -183,10 +183,13 @@ let modelLoading=false;
 function updateModelLoading(progress){
   const meter=$('model-load-progress'),detail=$('model-load-detail');
   meter.classList.remove('hidden');
-  if(progress.stage==='decode'){meter.value=100;detail.textContent='Finishing your Roadster…';}
+  if(progress.stage==='cached'){$('world').dataset.modelSource='device';meter.value=100;detail.textContent='Opening your saved Roadster…';}
+  else if(progress.stage==='decode'){meter.value=100;detail.textContent='Finishing your Roadster…';}
   else if(progress.stage!=='ready'){
     if(progress.total>0)meter.value=Math.min(99,Math.round(progress.loaded/progress.total*100));else meter.removeAttribute('value');
-    detail.textContent=progress.loaded?`Loading detailed model · ${(progress.loaded/1048576).toFixed(1)} MB`:progress.attempt?'Trying another version of the detailed model…':'Loading detailed model…';
+    const loaded=(progress.loaded/1048576).toFixed(1),total=(progress.total/1048576).toFixed(1);
+    if(progress.loaded)$('world').dataset.modelSource='network';
+    detail.textContent=progress.loaded?`Loading your Roadster · ${loaded}${progress.total?' / '+total:''} MB`:progress.attempt?'Opening another compatible model…':'Loading your Roadster · saved for future visits';
   }
 }
 async function prepareRoadster(){
@@ -212,7 +215,7 @@ async function prepareRoadster(){
   }catch(error){
     $('world').dataset.carModel='error';
     $('model-load-title').textContent='LET’S TRY THAT AGAIN';
-    $('model-load-detail').textContent='Your Roadster couldn’t finish loading. Check your connection and retry.';
+    $('model-load-detail').textContent=error.code==='MODEL_NETWORK'?(error.reason==='deadline'?'The download is taking too long. Please retry when your connection improves.':'The download was interrupted. Check your connection, then retry.'):'Your Roadster couldn’t finish loading. Check your connection and retry.';
     $('model-load-progress').classList.add('hidden');$('model-load-retry').classList.remove('hidden');
     console.warn('Detailed Roadster loading failed after recovery attempts.',error);
   }finally{modelLoading=false;}

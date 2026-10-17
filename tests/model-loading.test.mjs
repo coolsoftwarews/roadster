@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fetchModelBytes, loadModelWithRecovery} from '../dist/model-loading.js';
+import {fetchModelBytes, loadModelWithRecovery, MODEL_CACHE_NAME} from '../dist/model-loading.js';
 
 function makeGlb() {
   const json = new TextEncoder().encode(JSON.stringify({asset: {version: '2.0'}, scenes: []}));
@@ -75,7 +75,7 @@ test('model download aborts a stalled fetch and reports the timeout', async () =
         reject(new DOMException('Aborted', 'AbortError'));
       }, {once: true});
     }),
-  }), /download timed out/);
+  }), error => error.code === 'MODEL_NETWORK' && error.reason === 'stalled');
   assert.equal(aborted, true);
 });
 
@@ -99,7 +99,7 @@ for (const successIndex of [1, 2]) {
 
     assert.equal(result, rig);
     assert.deepEqual(attempts, candidates.slice(0, successIndex + 1).map((candidate, index) => ({
-      candidate, cache: index ? 'reload' : 'default',
+      candidate, cache: 'default',
     })));
     assert.deepEqual(progress.filter(event => event.loaded === 12).map(event => ({
       attempt: event.attempt, variant: event.variant,
@@ -126,4 +126,141 @@ test('model recovery preserves every failure in an AggregateError when all varia
     return true;
   });
   assert.deepEqual(attempted, candidates);
+});
+
+test('a continuously progressing stream can outlast the inactivity timeout', async () => {
+  const bytes = makeGlb();
+  const progress = [];
+  let interval;
+  const data = await fetchModelBytes('/slow-but-progressing.glb', {
+    timeoutMs: 80, maxDurationMs: 1500, cacheStorage: null,
+    onProgress: event => progress.push(event),
+    fetchImpl: async () => new Response(new ReadableStream({
+      start(controller) {
+        let offset = 0;
+        interval = setInterval(() => {
+          const next = Math.min(bytes.length, offset + 12);
+          controller.enqueue(bytes.slice(offset, next));
+          offset = next;
+          if (offset === bytes.length) { clearInterval(interval); controller.close(); }
+        }, 30);
+      },
+      cancel() { clearInterval(interval); }
+    }))
+  });
+  assert.deepEqual(new Uint8Array(data), bytes);
+  assert.ok(progress.length >= 4, 'the complete transfer spans multiple timeout windows');
+});
+
+test('a stalled body is cancelled without persisting its partial bytes', async () => {
+  const bytes = makeGlb();
+  let cancelled = false, written = false;
+  const storage = { open:async () => ({ match:async () => undefined, put:async () => { written = true; } }) };
+  await assert.rejects(fetchModelBytes('/body-stalled.glb', {
+    timeoutMs: 20, cacheStorage: storage,
+    fetchImpl: async () => new Response(new ReadableStream({
+      start(controller) { controller.enqueue(bytes.slice(0, 24)); },
+      cancel() { cancelled = true; }
+    }), { headers:{ 'content-length':String(bytes.length) } })
+  }), error => error.code === 'MODEL_NETWORK' && error.reason === 'stalled' && error.loaded === 24 && error.total === bytes.length);
+  assert.equal(cancelled, true);
+  assert.equal(written, false);
+});
+
+test('the absolute deadline bounds an endless progressing stream and clears its reader', async () => {
+  let interval, cancelled = false;
+  await assert.rejects(fetchModelBytes('/never-finishes.glb', {
+    timeoutMs: 80, maxDurationMs: 70, cacheStorage: null,
+    fetchImpl: async () => new Response(new ReadableStream({
+      start(controller) { interval = setInterval(() => controller.enqueue(new Uint8Array([1])), 10); },
+      cancel() { clearInterval(interval); cancelled = true; }
+    }))
+  }), error => error.code === 'MODEL_NETWORK' && error.reason === 'deadline' && error.loaded > 0);
+  assert.equal(cancelled, true);
+});
+
+test('stalled fetches are bounded even when the fetch implementation ignores abort', async () => {
+  await assert.rejects(fetchModelBytes('/unresponsive.glb', {
+    timeoutMs: 15, cacheStorage: null, fetchImpl: () => new Promise(() => {})
+  }), error => error.code === 'MODEL_NETWORK' && error.reason === 'stalled');
+});
+
+function memoryCache() {
+  const entries = new Map(), names = [], deleted = [];
+  const cache = {
+    async match(key) { return entries.get(key)?.clone(); },
+    async put(key, response) { entries.set(key, response.clone()); },
+    async delete(key) { deleted.push(key); return entries.delete(key); }
+  };
+  return { entries, names, deleted, storage:{ async open(name) { names.push(name); return cache; } } };
+}
+
+test('a validated model is reused from the versioned cache with its entire URL as key', async () => {
+  const bytes = makeGlb(), saved = memoryCache();
+  const url = 'https://roadster.example/assets/model.glb?v=asset-2';
+  let downloads = 0;
+  const options = { cacheStorage:saved.storage, fetchImpl:async () => { downloads++; return new Response(bytes); } };
+  assert.deepEqual(new Uint8Array(await fetchModelBytes(url, options)), bytes);
+  await new Promise(resolve => setImmediate(resolve));
+  const progress = [];
+  assert.deepEqual(new Uint8Array(await fetchModelBytes(url, { ...options, onProgress:event => progress.push(event) })), bytes);
+  assert.equal(downloads, 1);
+  assert.ok(saved.names.every(name => name === MODEL_CACHE_NAME));
+  assert.deepEqual([...saved.entries.keys()], [url]);
+  assert.deepEqual(progress, [{ stage:'cached', loaded:bytes.length, total:bytes.length }]);
+  await fetchModelBytes(url.replace('asset-2', 'asset-3'), options);
+  assert.equal(downloads, 2, 'a different asset version does not reuse old bytes');
+});
+
+test('invalid cached content is evicted and replaced only by a complete GLB', async () => {
+  const bytes = makeGlb(), saved = memoryCache(), url = 'https://roadster.example/model.glb?v=2';
+  for (const invalid of ['<!doctype html>fallback', bytes.slice(0, -4)]) {
+    saved.entries.set(url, new Response(invalid));
+    let downloads = 0;
+    assert.deepEqual(new Uint8Array(await fetchModelBytes(url, {
+      cacheStorage:saved.storage, fetchImpl:async () => { downloads++; return new Response(bytes); }
+    })), bytes);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(downloads, 1);
+    assert.deepEqual(new Uint8Array(await saved.entries.get(url).clone().arrayBuffer()), bytes);
+  }
+  assert.deepEqual(saved.deleted, [url, url]);
+});
+
+test('quota errors, denied cache access and unsupported storage do not prevent model readiness', async () => {
+  const bytes = makeGlb();
+  for (const cacheStorage of [null, {},
+    { open:async () => { throw new Error('Storage denied'); } },
+    { open:async () => ({ match:async () => undefined, put:async () => { throw new Error('Quota exceeded'); } }) }
+  ]) {
+    const data = await fetchModelBytes('/model.glb', { cacheStorage, fetchImpl:async () => new Response(bytes) });
+    assert.deepEqual(new Uint8Array(data), bytes);
+  }
+  // Give rejected background writes a turn to surface any unhandled rejection.
+  await new Promise(resolve => setImmediate(resolve));
+});
+
+test('a slow cache lookup or write never holds the model loader indefinitely', async () => {
+  const bytes = makeGlb();
+  const cacheStorage = { open:async () => ({ match:() => new Promise(() => {}), put:() => new Promise(() => {}) }) };
+  const data = await fetchModelBytes('/model.glb', {
+    cacheStorage, cacheReadTimeoutMs:15, fetchImpl:async () => new Response(bytes)
+  });
+  assert.deepEqual(new Uint8Array(data), bytes);
+});
+
+test('network, stalled, deadline, and server failures never trigger a fallback download storm', async () => {
+  for (const options of [
+    { fetchImpl:async () => { throw new TypeError('Network disconnected'); } },
+    { fetchImpl:() => new Promise(() => {}), timeoutMs:10 },
+    { fetchImpl:() => new Promise(() => {}), timeoutMs:100, maxDurationMs:10 },
+    { fetchImpl:async () => new Response('Unavailable', { status:503 }) }
+  ]) {
+    let attempts = 0;
+    await assert.rejects(loadModelWithRecovery(candidates, async candidate => {
+      attempts++;
+      return fetchModelBytes(candidate.url, { ...options, cacheStorage:null });
+    }), error => error.code === 'MODEL_NETWORK');
+    assert.equal(attempts, 1);
+  }
 });
